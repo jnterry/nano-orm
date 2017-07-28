@@ -1,0 +1,26 @@
+{
+  "name"        : "nano-orm",
+  "version"     : "0.0.0",
+  "description" : "Simple ORM build around any-db with Q for promises",
+  "homepage"    : "https://github.com/jnterry/nano-orm",
+  "author"      : "Jamie Terry (https://github.com/jnterry)",
+  "keywords"    : [
+	"promise",
+	"promises",
+	"orm",
+	"sql",
+	"database",
+  ],
+  "repository": {
+    "type" : "git",
+    "url"  : "git://github.com/jnterry/nano-orm.git"
+  },
+  "main"        : "model.js",
+  "license"     : "MIT",
+  "scripts"     : {
+	"test" : "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies" : {
+	"q"        : "1.5.0"
+  }
+}
