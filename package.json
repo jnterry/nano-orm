@@ -1,7 +1,7 @@
 {
   "name"        : "nano-orm",
   "version"     : "0.0.0",
-  "description" : "Simple ORM build around any-db with Q for promises",
+  "description" : "Simple ORM built around any-db with Q for promises",
   "homepage"    : "https://github.com/jnterry/nano-orm",
   "author"      : "Jamie Terry (https://github.com/jnterry)",
   "keywords"    : [
