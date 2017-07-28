@@ -23,7 +23,6 @@ function _attachQueryFunctions(ModelClass){
 	ModelClass.load = function(db, id){
 		return db.executeP(ModelClass._queries.load, [id])
 			.then((res) => {
-				console.log("db executeP returned: ");
 				console.dir(res);
 				if(res.length !== 1){
 					throw ("Failed to load " + id + " from " + table
@@ -82,13 +81,8 @@ function _attachQueryFunctions(ModelClass){
 	ModelClass._queries.insert = stmt_insert;
 
 	ModelClass._instance_prototype.save = function(db){
-		console.log("About to save, this is: ");
-		console.dir(this);
 		// Do nothing if the instance is not _dirty
-		if(!this._dirty){
-			console.log("Skipping save since instance not dirty");
-			return Q(this);
-		}
+		if(!this._dirty){ return Q(this); }
 
 		// Generate parameters for the save operation
 		let params = ModelClass.getFieldNames().map((f) => {
@@ -138,7 +132,7 @@ function _attachQueryFunctions(ModelClass){
 ///        - id_field -> Name of the id field, defaults to 'id'
 //////////////////////////////////////////////////////////////////////////////
 function createModel(table_name, model_fields, options){
-	console.log("Creating Model for table: '" + table_name + "'");
+	console.info("Creating Model for table: '" + table_name + "'");
 
 	/////////////////////////////////////////////////
 	// Check and preprocess parameters to this function
@@ -158,6 +152,9 @@ function createModel(table_name, model_fields, options){
 	let id_field_name = "id";
 	if(options && options.id_field){ id_field_name = options.id_field; }
 
+	/////////////////////////////////////////////////
+	// Define proxy used to access instances and make fields looks like
+	// standard object properties
 	let instance_proxy = {
 		get: function(target, name){
 			return name in target._fields ? target.fields[name] : target[name];
@@ -211,14 +208,11 @@ function createModel(table_name, model_fields, options){
 		},
 
 		createFromRow : (row) => {
-			console.log("Creating from row: ");
-			console.dir(row);
 			let model = Model.create();
 
 			model._fields[Model.getIdFieldName()] = row[Model.getIdFieldName()];
 
 			for(let f of Model.getFieldNames()){
-				console.log("Setting field " + f + " from row, value: " + row[f]);
 				model._fields[f] = row[f];
 			}
 
