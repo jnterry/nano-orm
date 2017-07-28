@@ -158,6 +158,23 @@ function createModel(table_name, model_fields, options){
 	let id_field_name = "id";
 	if(options && options.id_field){ id_field_name = options.id_field; }
 
+	let instance_proxy = {
+		get: function(target, name){
+			return name in target._fields ? target.fields[name] : target[name];
+		},
+
+		set: function(target, name, value){
+			if(target._fields[name] !== undefined){
+				target._fields[name] = value;
+				target.markAsDirty();
+				return true;
+			} else {
+				target[name] = value;
+				return true;
+			}
+		}
+	};
+
 	/////////////////////////////////////////////////
 	// Define basic properties of the Model
 	let Model = {
@@ -190,7 +207,7 @@ function createModel(table_name, model_fields, options){
 				}
 			}
 
-			return model;
+			return new Proxy(model, instance_proxy);
 		},
 
 		createFromRow : (row) => {
