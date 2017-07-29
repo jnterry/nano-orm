@@ -1,6 +1,6 @@
 # Nano ORM
 
-_Tiny wrapper layer for loading and persisting Models from a SQL databases using a Q promise based interface_
+_Tiny wrapper layer for loading and persisting Models from SQL databases using a Q promise based interface_
 
 ## Motivation and Who is This For?
 
@@ -13,7 +13,7 @@ However, assuming the application's developers:
 
 The advantages touted by such libraries don't seem all that attractive. Indeed there is no need to have the code be compatible with every database under the sun, and learning the constructs specific to the ORM is simply an additional burden placed on the developer, who would be more comfortable writting the SQL  queries directly. This can also lead to more performant code without layers of abstraction hiding what is really going on.
 
-Under these assumptions, the main benefit of a traditional ORM is avoiding tedious boilerplate for loading and persisting models from the database. It is this that Nano ORM attempts to avoid - with any intresting functionality unique to the app being provided by the application's developer extend the model's created by Nano ORM with their own functions and utilities built using plain SQL.
+Under these assumptions, the main benefit of a traditional ORM is avoiding tedious boilerplate for loading and persisting models from the database. It is this that Nano ORM attempts to avoid - with any intresting functionality unique to the app being provided by the application's developer extending the model's created by Nano ORM with their own functions and utilities built using plain SQL.
 
 ## Basic Usage
 
@@ -27,16 +27,16 @@ let User = nano_orm.defineModel('user', ['email', 'password']);
 // Connect to the database
 AnyDbQ({ adapter: 'sqlite3'})
     .then((dbh) => {
-	    // Load the row with id 1 from the database
-		User.load(dbh, 1)
-		    .then((user) => {
-			    // Modify the instance
-		        user.email = 'test@example.com';
+        // Load the row with id 1 from the database
+        User.load(dbh, 1)
+            .then((user) => {
+                // Modify the instance
+                user.email = 'test@example.com';
 
-	            // Persist the changes to the database
-		        return user.save(dbh);
-			});
-	});
+                // Persist the changes to the database
+                return user.save(dbh);
+            });
+    });
 ```
 
 More complete examples can be found in the /examples directory.
