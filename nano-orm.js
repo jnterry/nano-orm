@@ -1,10 +1,12 @@
-//////////////////////////////////////////////////////////////////////////////
-/// \file Model.js
+////////////////////////////////////////////////////////////////////////////
+///                           Part of nano-orm                           ///
+////////////////////////////////////////////////////////////////////////////
+/// \file nano-orm.js
 /// \author Jamie Terry
-/// \date 2017/7/27
+/// \date 2017/07/27
 /// \brief Defines base class for representing Model's which can be both
 /// loaded from and persisted to some database
-//////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////
 
 "use strict";
 
@@ -21,16 +23,15 @@ function _attachQueryFunctions(ModelClass){
 	ModelClass._queries.load = stmt_load;
 
 	ModelClass.load = function(db, id){
-		return db.executeP(ModelClass._queries.load, [id])
+		return db.query(ModelClass._queries.load, [id])
 			.then((res) => {
-				console.dir(res);
-				if(res.length !== 1){
-					throw ("Failed to load " + id + " from " + table
-						   + " since result contained " + res.length + " entries");
+				if(res.rows.length !== 1){
+					throw ("Failed to load " + id + " from " + ModelClass.getTableName()
+						   + " since result contained " + res.rows.length + " entries");
 				}
-				return ModelClass.createFromRow(res[0]);
+				return ModelClass.createFromRow(res.rows[0]);
 			});
-	}
+	};
 
 	///////////////////////////////
 	// Find query
@@ -44,12 +45,12 @@ function _attachQueryFunctions(ModelClass){
 	ModelClass.find = function(db, where_clause, params){
 		//:TODO: escape the where clause?
 		var query = ModelClass._queries.find_prefix + where_clause;
-		return db.executeP(query, params)
+		return db.query(query, params)
 			.then((res) => {
 				var ops = [];
-				for(let i = 0; i < res.length; ++i){
+				for(let i = 0; i < res.rows.length; ++i){
 					// :TODO:COMP: createFromRows function?
-					ops.push(ModelClass.createFromRow(db, res[i]));
+					ops.push(ModelClass.createFromRow(db, res.rows[i]));
 				}
 				return Q.all(ops);
 			});
@@ -94,15 +95,15 @@ function _attachQueryFunctions(ModelClass){
 		let promise;
 		if(this.getId() === 0){
 			//then this instance has never been saved before, insert new record
-			promise = db.executeP(ModelClass._queries.insert, params)
+			promise = db.query(ModelClass._queries.insert, params)
 				.then((res) => {
-					this.setId(res.insertId);
+					this.setId(res.lastInsertId);
 					return this;
 				});
 		} else {
 			//updaing existing entry requires a WHERE id = ? as well
 			params.push(this.getId());
-			promise = db.executeP(ModelClass._queries.update, params);
+			promise = db.query(ModelClass._queries.update, params);
 		}
 
 		promise = promise.then((res) => {
@@ -120,7 +121,7 @@ function _attachQueryFunctions(ModelClass){
 	ModelClass._instance_prototype.delete = function(db){
 		// If not yet saved in database, do nothing
 		if(this.getId() === 0){ return Q(); }
-		return db.executeP(ModelClass._queries.delete, this.getId());
+		return db.query(ModelClass._queries.delete, this.getId());
 	};
 }
 
@@ -131,7 +132,7 @@ function _attachQueryFunctions(ModelClass){
 /// \param options JSON object representing additional options for the model
 ///        - id_field -> Name of the id field, defaults to 'id'
 //////////////////////////////////////////////////////////////////////////////
-function createModel(table_name, model_fields, options){
+function defineModel(table_name, model_fields, options){
 	console.info("Creating Model for table: '" + table_name + "'");
 
 	/////////////////////////////////////////////////
@@ -157,7 +158,8 @@ function createModel(table_name, model_fields, options){
 	// standard object properties
 	let instance_proxy = {
 		get: function(target, name){
-			return name in target._fields ? target.fields[name] : target[name];
+			return target._fields[name] !== undefined ?
+				target._fields[name] : target[name];
 		},
 
 		set: function(target, name, value){
@@ -198,7 +200,7 @@ function createModel(table_name, model_fields, options){
 			if(field_values != undefined){
 				for(let f in field_values){
 					if(model._fields[f] === undefined){
-						throw "Attempted to specify value for non-existant field: " + f;
+						throw "Attempted to specify value for non-existent field: " + f;
 					}
 					model._fields[f] = field_values[f];
 				}
@@ -237,5 +239,5 @@ function createModel(table_name, model_fields, options){
 }
 
 module.exports = {
-	defineModel : createModel,
+	defineModel           : defineModel,
 };

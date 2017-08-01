@@ -1,7 +1,7 @@
 {
 	"name": "nano-orm",
 	"version": "0.0.0",
-	"description": "Simple ORM built around any-db with Q for promises",
+	"description": "Tiny wrapper layer for loading and persisting models to databases with promise based interface",
 	"homepage": "https://github.com/jnterry/nano-orm",
 	"author": "Jamie Terry (https://github.com/jnterry)",
 	"keywords": [
@@ -18,13 +18,19 @@
 	"main": "model.js",
 	"license": "MIT",
 	"scripts": {
-		"test": "echo \"Error: no test specified\" && exit 1"
+		"test": "./node_modules/.bin/mocha test/all.js --reporter spec",
+		"cover": "node_modules/istanbul/lib/cli.js cover node_modules/mocha/bin/_mocha -- -R spec test/all.js"
 	},
 	"dependencies": {
-		"q": "1.5.0",
-		"any-db-sqlite3": "2.1.4"
+		"any-db": "2.2.0",
+		"any-db-q": "0.2.0",
+		"q": "1.5.0"
 	},
-	"peerDependencies": {
-		"any-db": "2.2.0"
+	"devDependencies": {
+		"any-db-sqlite3": "2.1.4",
+		"chai": "4.1.0",
+		"coveralls": "2.13.1",
+		"istanbul": "0.4.5",
+		"mocha": "3.4.2"
 	}
 }
