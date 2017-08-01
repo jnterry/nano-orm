@@ -2,12 +2,13 @@
 
 _Tiny wrapper layer for loading and persisting Models from SQL databases using a Q promise based interface_
 
+[![Build Status](https://travis-ci.org/jnterry/nano-orm.svg?branch=master)](https://travis-ci.org/jnterry/nano-orm) [![Coverage Status](https://coveralls.io/repos/github/jnterry/nano-orm/badge.svg?branch=master)](https://coveralls.io/github/jnterry/nano-orm?branch=master)
 ## PRERELEASE
 
 **WARNING: This package is currently in prerelease - the API may or may not change before final release**
 
 The package number will be bumped to 1.0.0 for the initial release, todo before then:
-- Release (any-db-q)[https://github.com/jnterry/any-db-q]
+- Release [any-db-q](https://github.com/jnterry/any-db-q)
 - Documentation
 - Test usage of this in a real project
 - Explore concept of extensions (mini-modules that add methods to the prototypes of models to offer enhanced functionality)
