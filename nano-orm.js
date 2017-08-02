@@ -19,7 +19,7 @@ function _attachQueryFunctions(ModelClass){
 	for(let f of ModelClass.getFieldNames()){ stmt_load += f + ","; }
 	stmt_load = stmt_load.slice(0,-1);
 	stmt_load += " FROM " + ModelClass.getTableName() + " WHERE " + ModelClass.getIdFieldName() + "=?;";
-	console.info("  Made load stmt: " + stmt_load);
+	//console.info("  Made load stmt: " + stmt_load);
 	ModelClass._queries.load = stmt_load;
 
 	ModelClass.load = function(db, id){
@@ -39,7 +39,7 @@ function _attachQueryFunctions(ModelClass){
 	for(let f of ModelClass.getFieldNames()){ stmt_find += f + ","; }
 	stmt_find = stmt_find.slice(0,-1);
 	stmt_find += " FROM " + ModelClass.getTableName() + " WHERE ";
-	console.info("  Made find stmt: " + stmt_find);
+	//console.info("  Made find stmt: " + stmt_find);
 	ModelClass._queries.find_prefix = stmt_find;
 
 	ModelClass.find = function(db, where_clause, params){
@@ -65,7 +65,7 @@ function _attachQueryFunctions(ModelClass){
 	}
 	stmt_update = stmt_update.slice(0, -1);
 	stmt_update += " WHERE " + ModelClass.getIdFieldName() + "=?;";
-	console.info("  Made update stmt: " + stmt_update);
+	//console.info("  Made update stmt: " + stmt_update);
 	ModelClass._queries.update = stmt_update;
 
 	///////////////////////////////
@@ -78,7 +78,7 @@ function _attachQueryFunctions(ModelClass){
 			for(let f in ModelClass.getFieldNames()){ stmt_insert += "?,"; }
 	stmt_insert = stmt_insert.slice(0,-1);
 	stmt_insert += ");";
-	console.info("  Made insert stmt: " + stmt_insert);
+	//console.info("  Made insert stmt: " + stmt_insert);
 	ModelClass._queries.insert = stmt_insert;
 
 	ModelClass._instance_prototype.save = function(db){
@@ -119,7 +119,7 @@ function _attachQueryFunctions(ModelClass){
 	ModelClass._queries.delete = "DELETE FROM " + ModelClass.getTableName() +
 		" WHERE " + ModelClass.getIdFieldName() + "=?;";
 
-	console.log("  Made delete statement: " + ModelClass._queries.delete);
+	//console.info("  Made delete statement: " + ModelClass._queries.delete);
 
 	ModelClass.delete = function(dbh, id){
 		return dbh.query(ModelClass._queries.delete, [id]);
@@ -145,7 +145,7 @@ function _attachQueryFunctions(ModelClass){
 ///        - id_field -> Name of the id field, defaults to 'id'
 //////////////////////////////////////////////////////////////////////////////
 function defineModel(table_name, model_fields, options){
-	console.info("Creating Model for table: '" + table_name + "'");
+	//console.info("Creating Model for table: '" + table_name + "'");
 
 	/////////////////////////////////////////////////
 	// Check and preprocess parameters to this function
