@@ -1,10 +1,11 @@
 ////////////////////////////////////////////////////////////////////////////
 ///                       Part of nano-orm                               ///
 ////////////////////////////////////////////////////////////////////////////
-/// \file all.js
+/// \file load-and-persist.js
 /// \author Jamie Terry
 /// \date 2017/08/01
-/// \brief File which imports and runs all other test scripts
+/// \brief Simple tests for loading and persisting a model to and from the
+/// database
 ////////////////////////////////////////////////////////////////////////////
 
 "use strict";
@@ -76,6 +77,46 @@ it('Persist Model', () => {
 				expect(results.rows[0].id      ).is.deep.equal(1);
 				expect(results.rows[0].username).is.deep.equal('Sarah');
 				expect(results.rows[0].password).is.deep.equal('cats');
+			});
+	});
+});
+
+it('Modify Model', () => {
+	return initUserTable().then((dbh) => {
+		return Q()
+			.then(() => {
+				return dbh.query(`INSERT INTO user (id,username,password) VALUES
+				                      (1,'admin','admin'),
+                                      (2,'Bob',  'password'),
+                                      (3,'Tim',  '1234')
+				                 `);
+			}).then(() => {
+				return User.load(dbh, 2);
+			}).then((user) => {
+				expect(user.id      ).is.deep.equal(2);
+				expect(user.username).is.deep.equal('Bob');
+				expect(user.password).is.deep.equal('password');
+				user.username = 'Bobby';
+				return user.save(dbh);
+			}).then((user) => {
+				expect(user.id      ).is.deep.equal(2);
+				expect(user.username).is.deep.equal('Bobby');
+				expect(user.password).is.deep.equal('password');
+
+				return dbh.query(`SELECT * FROM user ORDER BY id ASC`);
+			}).then((results) => {
+				expect(results.rowCount        ).is.deep.equal(3);
+				expect(results.rows[0].id      ).is.deep.equal(1);
+				expect(results.rows[0].username).is.deep.equal('admin');
+				expect(results.rows[0].password).is.deep.equal('admin');
+
+				expect(results.rows[1].id      ).is.deep.equal(2);
+				expect(results.rows[1].username).is.deep.equal('Bobby');
+				expect(results.rows[1].password).is.deep.equal('password');
+
+				expect(results.rows[2].id      ).is.deep.equal(3);
+				expect(results.rows[2].username).is.deep.equal('Tim');
+				expect(results.rows[2].password).is.deep.equal('1234');
 			});
 	});
 });
