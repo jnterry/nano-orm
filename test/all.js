@@ -21,5 +21,7 @@ function importTest(name, path){
 }
 
 describe('nano-orm', () => {
-	importTest('load-and-persist');
+	importTest('model-properties');
+	importTest('create-instance');
+	importTest('load-save-update-delete');
 });

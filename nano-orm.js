@@ -54,7 +54,7 @@ function _attachQueryFunctions(ModelClass){
 				}
 				return Q.all(ops);
 			});
-	}
+	};
 
 	///////////////////////////////
 	// Update query
@@ -93,16 +93,16 @@ function _attachQueryFunctions(ModelClass){
 		////////////////////////////////////////////
 		// Perform the save operation, get a promise of the result
 		let promise;
-		if(this.getId() === 0){
+		if(this.id === 0){
 			//then this instance has never been saved before, insert new record
 			promise = db.query(ModelClass._queries.insert, params)
 				.then((res) => {
-					this.setId(res.lastInsertId);
+					this.id = res.lastInsertId;
 					return this;
 				});
 		} else {
 			//updaing existing entry requires a WHERE id = ? as well
-			params.push(this.getId());
+			params.push(this.id);
 			promise = db.query(ModelClass._queries.update, params);
 		}
 
@@ -118,10 +118,22 @@ function _attachQueryFunctions(ModelClass){
 	// Delete query
 	ModelClass._queries.delete = "DELETE FROM " + ModelClass.getTableName() +
 		" WHERE " + ModelClass.getIdFieldName() + "=?;";
+
+	console.log("  Made delete statement: " + ModelClass._queries.delete);
+
+	ModelClass.delete = function(dbh, id){
+		return dbh.query(ModelClass._queries.delete, [id]);
+	};
+
 	ModelClass._instance_prototype.delete = function(db){
 		// If not yet saved in database, do nothing
-		if(this.getId() === 0){ return Q(); }
-		return db.query(ModelClass._queries.delete, this.getId());
+		if(this.id === 0){ return Q(); }
+
+		return db.query(ModelClass._queries.delete, this.id)
+			.then((instance) => {
+				instance.id = 0;
+				return instance;
+			});
 	};
 }
 
@@ -183,7 +195,7 @@ function defineModel(table_name, model_fields, options){
 		getFieldNames  : () => { return model_fields;  },
 		getIdFieldName : () => { return id_field_name; },
 
-		create : (field_values) => {
+		create : function(field_values){
 			let model = Object.create(Model._instance_prototype);
 
 			// Define fields of the model
@@ -191,13 +203,13 @@ function defineModel(table_name, model_fields, options){
 			model._dirty  = true;
 
 			// Ensure all fields have placeholder value
-			model._fields[id_field_name] = 0; // 0 indicates not saved in db
+			model._fields.id = 0; // 0 indicates not saved in db
 			for(let f of model_fields){
 				model._fields[f] = null;
 			}
 
 			// Initialize values of the fields
-			if(field_values != undefined){
+			if(field_values !== undefined){
 				for(let f in field_values){
 					if(model._fields[f] === undefined){
 						throw "Attempted to specify value for non-existent field: " + f;
@@ -209,12 +221,20 @@ function defineModel(table_name, model_fields, options){
 			return new Proxy(model, instance_proxy);
 		},
 
-		createFromRow : (row) => {
+		createFromRow : function(row){
 			let model = Model.create();
 
-			model._fields[Model.getIdFieldName()] = row[Model.getIdFieldName()];
+			if(row[Model.getIdFieldName()] === undefined){
+				throw new Error("Cannot construct instance of " + Model.getTableName() +
+				                " since row is missing id field '" + Model.getIdFieldName() + "'");
+			}
+			model._fields.id = row[Model.getIdFieldName()];
 
 			for(let f of Model.getFieldNames()){
+				if(row[f] === undefined){
+					throw new Error("Cannot construct instance of " + Model.getTableName() +
+					                " since row is missing data field: " + f);
+				}
 				model._fields[f] = row[f];
 			}
 
@@ -223,13 +243,10 @@ function defineModel(table_name, model_fields, options){
 		},
 
 		_instance_prototype : {
-			isDirty     : function()  { return this._dirty;                 },
-			markAsDirty : function()  { this._dirty = true;                 },
+			isDirty     : function() { return this._dirty; },
+			markAsDirty : function() { this._dirty = true; },
 
-			getModel    : function()  { return Model;                       },
-
-			getId       : function()  { return this._fields[id_field_name]; },
-			setId       : function(id){ this._fields[id_field_name] = id;   },
+			getModel    : function() { return Model;       },
 		}
 	};
 
