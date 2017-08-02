@@ -62,7 +62,6 @@ More complete examples can be found in the /examples directory.
 ### Planned
 
 - Auto-updated 'created\_at' and 'updated\_at' fields
-- Soft delete, with a deleted_at field
 - Load instances with IDs in some set
 
 ## Installation
