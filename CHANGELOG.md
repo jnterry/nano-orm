@@ -1,5 +1,6 @@
 * Fri Aug 18 2017 Jamie Terry <jamie-terry@outlook.com> 0.2.1
-  - Fix package.json dependencies and main field
+  - Fix package.json dependencies, peerDependencies and devDependencies
+  - Fix pacakge.json's main field
 * Wed Aug 02 2017 Jamie Terry <jamie-terry@outlook.com> 0.2.0
   - Add 'delete' method to Model to delete by ID without even loading the instance
   - Extend test suite
