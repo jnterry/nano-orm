@@ -1,6 +1,6 @@
 {
 	"name": "nano-orm",
-	"version": "0.2.0",
+	"version": "0.2.1",
 	"description": "Tiny wrapper layer for loading and persisting models to databases with promise based interface",
 	"homepage": "https://github.com/jnterry/nano-orm",
 	"author": "Jamie Terry (https://github.com/jnterry)",
@@ -15,7 +15,7 @@
 		"type": "git",
 		"url": "git://github.com/jnterry/nano-orm.git"
 	},
-	"main": "model.js",
+	"main": "nano-orm.js",
 	"license": "MIT",
 	"scripts": {
 		"test": "./node_modules/.bin/mocha test/all.js --reporter spec",
@@ -23,9 +23,11 @@
 	},
 	"dependencies": {
 		"any-db": "2.2.0",
-		"any-db-q": "0.2.0",
-		"q": "1.5.0"
 	},
+	"peerDependencies": {
+		"any-db-q": "*",
+		"q": "*"
+	}
 	"devDependencies": {
 		"any-db-sqlite3": "2.1.4",
 		"chai": "4.1.0",

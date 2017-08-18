@@ -66,7 +66,7 @@ More complete examples can be found in the /examples directory.
 
 ## Installation
 
-:TODO: document (work out the peerDependency stuff with any-db-q)
+:TODO: document
 
 ## Model Methods
 
