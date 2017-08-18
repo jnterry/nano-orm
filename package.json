@@ -22,7 +22,7 @@
 		"cover": "node_modules/istanbul/lib/cli.js cover node_modules/mocha/bin/_mocha -- -R spec test/all.js"
 	},
 	"dependencies": {
-		"any-db": "2.2.0",
+		"any-db": "2.2.0"
 	},
 	"peerDependencies": {
 		"any-db-q": "*",
