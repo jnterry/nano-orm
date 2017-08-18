@@ -1,3 +1,5 @@
+* Fri Aug 18 2017 Jamie Terry <jamie-terry@outlook.com> 0.2.2
+  - Add .npmignore
 * Fri Aug 18 2017 Jamie Terry <jamie-terry@outlook.com> 0.2.1
   - Fix package.json dependencies, peerDependencies and devDependencies
   - Fix pacakge.json's main field
