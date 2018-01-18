@@ -30,25 +30,27 @@ Under these assumptions, the main benefit of a traditional ORM is avoiding tedio
 ## Basic Usage
 
 ```javascript
-let AnyDbQ   = require('any-db-q');
-let nano_orm = require('nano-orm');
+let AnyDb               = require('any-db');
+let nano_orm            = require('nano-orm');
+let DbConnectionPromise = require('db-connection-promise');
 
 // Define the model, wraps the 'user' table in the database, with columns 'email' and 'password'
 let User = nano_orm.defineModel('user', ['email', 'password']);
 
-// Connect to the database
-AnyDbQ({ adapter: 'sqlite3'})
-    .then((dbh) => {
-        // Load the row with id 1 from the database
-        User.load(dbh, 1)
-            .then((user) => {
-                // Modify the instance
-                user.email = 'test@example.com';
+let connection = AnyDb.createConnection({ adapter: 'sqlite3'});
+let dbh = DbConnectionPromise(connection);
 
-                // Persist the changes to the database
-                return user.save(dbh);
-            });
-    });
+// Load the row with id 1 from the database
+User
+	.load(dbh, 1)
+	.then((user) => {
+		// Modify the instance
+		user.email = 'test@example.com';
+
+		// Persist the changes to the database
+		return user.save(dbh);
+	});
+});
 ```
 
 More complete examples can be found in the /examples directory.
