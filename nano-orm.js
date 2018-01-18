@@ -22,12 +22,13 @@ function _attachQueryFunctions(ModelClass){
 	//console.info("  Made load stmt: " + stmt_load);
 	ModelClass._queries.load = stmt_load;
 
-	ModelClass.load = function(db, id){
-		return db.query(ModelClass._queries.load, [id])
+	ModelClass.load = function(dbh, id){
+		return dbh
+			.query(ModelClass._queries.load, [id])
 			.then((res) => {
 				if(res.rows.length !== 1){
 					throw ("Failed to load " + id + " from " + ModelClass.getTableName()
-						   + " since result contained " + res.rows.length + " entries");
+					       + " since result contained " + res.rows.length + " entries");
 				}
 				return ModelClass.createFromRow(res.rows[0]);
 			});
@@ -42,17 +43,18 @@ function _attachQueryFunctions(ModelClass){
 	//console.info("  Made find stmt: " + stmt_find);
 	ModelClass._queries.find_prefix = stmt_find;
 
-	ModelClass.find = function(db, where_clause, params){
+	ModelClass.find = function(dbh, where_clause, params){
 		//:TODO: escape the where clause?
 		var query = ModelClass._queries.find_prefix + where_clause;
-		return db.query(query, params)
+		return dbh
+			.query(query, params)
 			.then((res) => {
 				var ops = [];
 				for(let i = 0; i < res.rows.length; ++i){
 					// :TODO:COMP: createFromRows function?
-					ops.push(ModelClass.createFromRow(db, res.rows[i]));
+					ops.push(ModelClass.createFromRow(dbh, res.rows[i]));
 				}
-				return Q.all(ops);
+				return dbh.then(Q.all(ops));
 			});
 	};
 
@@ -81,7 +83,7 @@ function _attachQueryFunctions(ModelClass){
 	//console.info("  Made insert stmt: " + stmt_insert);
 	ModelClass._queries.insert = stmt_insert;
 
-	ModelClass._instance_prototype.save = function(db){
+	ModelClass._instance_prototype.save = function(dbh){
 		// Do nothing if the instance is not _dirty
 		if(!this._dirty){ return Q(this); }
 
@@ -95,7 +97,8 @@ function _attachQueryFunctions(ModelClass){
 		let promise;
 		if(this.id === 0){
 			//then this instance has never been saved before, insert new record
-			promise = db.query(ModelClass._queries.insert, params)
+			promise = dbh
+				.query(ModelClass._queries.insert, params)
 				.then((res) => {
 					this.id = res.lastInsertId;
 					return this;
@@ -103,7 +106,7 @@ function _attachQueryFunctions(ModelClass){
 		} else {
 			//updaing existing entry requires a WHERE id = ? as well
 			params.push(this.id);
-			promise = db.query(ModelClass._queries.update, params);
+			promise = dbh.query(ModelClass._queries.update, params);
 		}
 
 		promise = promise.then((res) => {
@@ -111,7 +114,7 @@ function _attachQueryFunctions(ModelClass){
 			return this;
 		});
 
-		return promise;
+		return dbh.then(() => { return promise; } );
 	};
 
 	///////////////////////////////
@@ -125,11 +128,12 @@ function _attachQueryFunctions(ModelClass){
 		return dbh.query(ModelClass._queries.delete, [id]);
 	};
 
-	ModelClass._instance_prototype.delete = function(db){
+	ModelClass._instance_prototype.delete = function(dbh){
 		// If not yet saved in database, do nothing
 		if(this.id === 0){ return Q(); }
 
-		return db.query(ModelClass._queries.delete, this.id)
+		return dbh
+			.query(ModelClass._queries.delete, this.id)
 			.then((instance) => {
 				instance.id = 0;
 				return instance;

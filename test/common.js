@@ -12,10 +12,12 @@ global.Q      = require('q');
 
 global.nano_orm = require('../nano-orm');
 
-let any_db_q = require('any-db-q');
+let AnyDb               = require('any-db');
+let DbConnectionPromise = require('db-connection-promise');
 
 global.getDbConnection = function(){
-	return any_db_q({ adapter: 'sqlite3'});
+	let conn = AnyDb.createConnection({ adapter: 'sqlite3'});
+	return DbConnectionPromise(conn);
 };
 
 /////////////////////////////////////////////////////////////////////
