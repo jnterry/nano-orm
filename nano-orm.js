@@ -247,9 +247,26 @@ function defineModel(table_name, model_fields, options){
 				}
 				model._fields[f] = row[f];
 			}
-
 			model._dirty = false;
 			return model;
+		},
+
+		/////////////////////////////////////////////////////////////////////
+		/// \brief Creates an instance of the model from a list of rows
+		/// as returned by database .query
+		/// \return Promise which will evaluate to an array of instances of this Model
+		/////////////////////////////////////////////////////////////////////
+		createFromRows : function(rows) {
+			if(rows.rowCount != null && rows.rows != null && rows.fields != null){
+				// This this is the result directly from the database
+				rows = rows.rows;
+			}
+
+			let result = [];
+			for(let i = 0; i < rows.length; ++i) {
+				result[i] = this.createFromRow(dbh, rows[i]);
+			}
+			return result;
 		},
 
 		_instance_prototype : {
