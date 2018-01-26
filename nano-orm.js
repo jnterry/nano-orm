@@ -204,6 +204,11 @@ function defineModel(table_name, model_fields, options){
 			}
 		}
 
+		// Define this.id field as a proxy for the internal this._fields.id field
+		// This can be 'got' only (IE: no set).
+		// It is set automatically when the instance is saved to the database
+		// and can't be modified else we may insert new instances/overwrite other
+		// instances when calling .save()
 		Object.defineProperty(this, 'id', {
 			configurable : false,
 			enumerable   : true,
@@ -212,6 +217,8 @@ function defineModel(table_name, model_fields, options){
 			},
 		});
 
+		// And define the rest of the field accessors,
+		// also proxies for the internal this._fields.xxx
 		for(let field of model_fields) {
 			Object.defineProperty(this, field, {
 				configurable : false,
