@@ -76,9 +76,9 @@ function runTestsAgainstModel(User){
 
 			return dbh
 				.then(() => {
-					let user = User.create({ username: 'Sarah',
-					                         password: 'cats'
-					                       });
+					let user = new User({ username: 'Sarah',
+					                      password: 'cats'
+					                    });
 					expect(user.id      ).is.deep.equal(0);
 					expect(user.username).is.deep.equal('Sarah');
 					expect(user.password).is.deep.equal('cats');

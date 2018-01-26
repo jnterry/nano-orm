@@ -18,16 +18,16 @@ let Email = nano_orm.defineModel('email', ['from', 'subject', 'body'],
                                 );
 
 it('Table Name', () => {
-	expect( User).does.respondTo('getTableName');
-	expect(Email).does.respondTo('getTableName');
+	expect(typeof( User.getTableName)).is.equal('function');
+	expect(typeof(Email.getTableName)).is.equal('function');
 
 	expect( User.getTableName()).is.deep.equal('user' );
 	expect(Email.getTableName()).is.deep.equal('email');
 });
 
 it('Field Names', () => {
-	expect( User).does.respondTo('getFieldNames');
-	expect(Email).does.respondTo('getFieldNames');
+	expect(typeof( User.getFieldNames)).is.equal('function');
+	expect(typeof(Email.getFieldNames)).is.equal('function');
 
 	expect( User.getFieldNames()).is.a('array').with.lengthOf(2);
 	expect( User.getFieldNames()).does.include('username');
@@ -40,8 +40,8 @@ it('Field Names', () => {
 });
 
 it('Id Field Name', () => {
-	expect( User).does.respondTo('getIdFieldName');
-	expect(Email).does.respondTo('getIdFieldName');
+	expect(typeof( User.getIdFieldName)).is.equal('function');
+	expect(typeof(Email.getIdFieldName)).is.equal('function');
 
 	expect( User.getIdFieldName()).is.deep.equal('id'      );
 	expect(Email.getIdFieldName()).is.deep.equal('email_id');

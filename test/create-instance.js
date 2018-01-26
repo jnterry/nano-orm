@@ -11,10 +11,10 @@ require('./common');
 
 let User = nano_orm.defineModel('user', ['username', 'password']);
 
-describe('create', () => {
+describe('constructor', () => {
 
 	it('No params results in default values for all parameters', () => {
-		let user = User.create();
+		let user = new User();
 
 		expect(user.id      ).is.deep.equal(0);
 		expect(user.username).is.deep.equal(null);
@@ -22,7 +22,7 @@ describe('create', () => {
 	});
 
 	it('Incomplete params results in default values for only missing parameters', () => {
-		let user = User.create({password: '999'});
+		let user = new User({password: '999'});
 
 		expect(user.id      ).is.deep.equal(0);
 		expect(user.username).is.deep.equal(null);
@@ -31,7 +31,7 @@ describe('create', () => {
 
 	it('Complete params fills in all data fields of instance', () => {
 
-		let user = User.create({password: '123', username: 'Jim'});
+		let user = new User({password: '123', username: 'Jim'});
 
 		expect(user.id      ).is.deep.equal(0);
 		expect(user.username).is.deep.equal('Jim');
