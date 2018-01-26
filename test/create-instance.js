@@ -76,3 +76,43 @@ describe('createFromRow', () => {
 		expect(() => User.createFromRow({ password: '', username: '' })).to.throw();
 	});
 });
+
+describe('createFromRows', () => {
+	it('Array of length 0 results in empty array', () => {
+		let user = User.createFromRows([]);
+		expect(user).is.deep.equal([]);
+	});
+
+	it('Array of length 1 results in single valid instance', () => {
+		let user = User.createFromRows([
+			{ id: 10, username: 'Tim', password: 'stuff' }
+		]);
+
+		expect(user[0].id      ).is.deep.equal(10     );
+		expect(user[0].username).is.deep.equal('Tim'  );
+		expect(user[0].password).is.deep.equal('stuff');
+	});
+
+	it('Array of length 2 results in 2 valid instances', () => {
+		let user = User.createFromRows([
+			{ id: 10, username: 'Tim', password: 'stuff' },
+			{ id: 11, username: 'Bob', password: 'thing' }
+		]);
+
+		expect(user[0].id      ).is.deep.equal(10     );
+		expect(user[0].username).is.deep.equal('Tim'  );
+		expect(user[0].password).is.deep.equal('stuff');
+
+		expect(user[1].id      ).is.deep.equal(11     );
+		expect(user[1].username).is.deep.equal('Bob'  );
+		expect(user[1].password).is.deep.equal('thing');
+	});
+
+	it('Array containing invalid objects throws error', () => {
+		expect(() => User.createFromRows([
+			{ id: 10, username: 'Tim', password: 'stuff' },
+			{ id: 11, username: 'Bob', password: 'thing' },
+			{},
+		])).to.throw();
+	});
+});
