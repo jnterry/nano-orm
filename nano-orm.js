@@ -52,9 +52,9 @@ function _attachQueryFunctions(ModelClass){
 				var ops = [];
 				for(let i = 0; i < res.rows.length; ++i){
 					// :TODO:COMP: createFromRows function?
-					ops.push(ModelClass.createFromRow(dbh, res.rows[i]));
+					ops.push(ModelClass.createFromRow(res.rows[i]));
 				}
-				return dbh.then(Q.all(ops));
+				return dbh.then(() => Q.all(ops));
 			});
 	};
 
@@ -88,9 +88,11 @@ function _attachQueryFunctions(ModelClass){
 		if(!this._dirty){ return Q(this); }
 
 		// Generate parameters for the save operation
-		let params = ModelClass.getFieldNames().map((f) => {
-			return this._fields[f];
-		});
+		let params = ModelClass
+		    .getFieldNames()
+		    .map((f) => {
+			    return this._fields[f];
+		    });
 
 		////////////////////////////////////////////
 		// Perform the save operation, get a promise of the result
@@ -114,7 +116,7 @@ function _attachQueryFunctions(ModelClass){
 			return this;
 		});
 
-		return dbh.then(() => { return promise; } );
+		return promise;
 	};
 
 	///////////////////////////////
@@ -225,6 +227,10 @@ function defineModel(table_name, model_fields, options){
 			return new Proxy(model, instance_proxy);
 		},
 
+		/////////////////////////////////////////////////////////////////////
+		/// \brief Creates an instance of this model from a row loaded from the
+		/// database are returned by db-connection-promise.query
+		/////////////////////////////////////////////////////////////////////
 		createFromRow : function(row){
 			let model = Model.create();
 
