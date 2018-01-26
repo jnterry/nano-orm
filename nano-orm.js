@@ -30,7 +30,7 @@ function _attachQueryFunctions(ModelClass){
 					throw ("Failed to load " + id + " from " + ModelClass.getTableName()
 					       + " since result contained " + res.rows.length + " entries");
 				}
-				return ModelClass.createFromRow(dbh, res.rows[0]);
+				return ModelClass.createFromRow(res.rows[0]);
 			});
 	};
 
@@ -264,7 +264,7 @@ function defineModel(table_name, model_fields, options){
 
 			let result = [];
 			for(let i = 0; i < rows.length; ++i) {
-				result[i] = this.createFromRow(dbh, rows[i]);
+				result[i] = this.createFromRow(rows[i]);
 			}
 			return result;
 		},
