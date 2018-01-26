@@ -46,3 +46,12 @@ it('Id Field Name', () => {
 	expect( User.getIdFieldName()).is.deep.equal('id'      );
 	expect(Email.getIdFieldName()).is.deep.equal('email_id');
 });
+
+it('Cant modify id field manually', () => {
+	let user = new User();
+	// id should be 0 before saved to db
+	expect(user.id).is.deep.equal(0);
+
+	// shouldn't be able to set id manually (its updated upon save)
+	expect(() => { user.id = 1;}).to.throw();
+});
