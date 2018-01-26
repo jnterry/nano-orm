@@ -30,7 +30,7 @@ function _attachQueryFunctions(ModelClass){
 					throw ("Failed to load " + id + " from " + ModelClass.getTableName()
 					       + " since result contained " + res.rows.length + " entries");
 				}
-				return ModelClass.createFromRow(res.rows[0]);
+				return ModelClass.createFromRow(dbh, res.rows[0]);
 			});
 	};
 
