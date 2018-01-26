@@ -22,6 +22,11 @@ function _attachQueryFunctions(ModelClass){
 	//console.info("  Made load stmt: " + stmt_load);
 	ModelClass._queries.load = stmt_load;
 
+	/////////////////////////////////////////////////////////////////////
+	/// \brief Loads a specific instance of this model from the data base
+	/// \param dbh A db-connection-promise to use to access the database
+	/// \param id  The id of the instance to load - should be unique
+	/////////////////////////////////////////////////////////////////////
 	ModelClass.load = function(dbh, id){
 		return dbh
 			.query(ModelClass._queries.load, [id])
@@ -48,14 +53,7 @@ function _attachQueryFunctions(ModelClass){
 		var query = ModelClass._queries.find_prefix + where_clause;
 		return dbh
 			.query(query, params)
-			.then((res) => {
-				var ops = [];
-				for(let i = 0; i < res.rows.length; ++i){
-					// :TODO:COMP: createFromRows function?
-					ops.push(ModelClass.createFromRow(dbh, res.rows[i]));
-				}
-				return dbh.then(Q.all(ops));
-			});
+			.then(ModelClass.createFromRows.bind(ModelClass));
 	};
 
 	///////////////////////////////
@@ -83,14 +81,16 @@ function _attachQueryFunctions(ModelClass){
 	//console.info("  Made insert stmt: " + stmt_insert);
 	ModelClass._queries.insert = stmt_insert;
 
-	ModelClass._instance_prototype.save = function(dbh){
+	ModelClass.prototype.save = function(dbh){
 		// Do nothing if the instance is not _dirty
 		if(!this._dirty){ return Q(this); }
 
 		// Generate parameters for the save operation
-		let params = ModelClass.getFieldNames().map((f) => {
-			return this._fields[f];
-		});
+		let params = ModelClass
+		    .getFieldNames()
+		    .map((f) => {
+			    return this._fields[f];
+		    });
 
 		////////////////////////////////////////////
 		// Perform the save operation, get a promise of the result
@@ -100,7 +100,7 @@ function _attachQueryFunctions(ModelClass){
 			promise = dbh
 				.query(ModelClass._queries.insert, params)
 				.then((res) => {
-					this.id = res.lastInsertId;
+					this._fields.id = res.lastInsertId;
 					return this;
 				});
 		} else {
@@ -114,7 +114,7 @@ function _attachQueryFunctions(ModelClass){
 			return this;
 		});
 
-		return dbh.then(() => { return promise; } );
+		return promise;
 	};
 
 	///////////////////////////////
@@ -128,7 +128,7 @@ function _attachQueryFunctions(ModelClass){
 		return dbh.query(ModelClass._queries.delete, [id]);
 	};
 
-	ModelClass._instance_prototype.delete = function(dbh){
+	ModelClass.prototype.delete = function(dbh){
 		// If not yet saved in database, do nothing
 		if(this.id === 0){ return Q(); }
 
@@ -169,90 +169,128 @@ function defineModel(table_name, model_fields, options){
 	let id_field_name = "id";
 	if(options && options.id_field){ id_field_name = options.id_field; }
 
-	/////////////////////////////////////////////////
-	// Define proxy used to access instances and make fields looks like
-	// standard object properties
-	let instance_proxy = {
-		get: function(target, name){
-			return target._fields[name] !== undefined ?
-				target._fields[name] : target[name];
-		},
+	/////////////////////////////////////////////////////////////////////
+	/// \brief Constructor which creates new instance of some model
+	/// \param field_values Object representing the values to use for the
+	/// fields of the model. Any fields that are not specified will be assigned
+	/// null. If extra values are put in field_values for which a field does
+	/// not actually exist, then this method will throw.
+	/////////////////////////////////////////////////////////////////////
+	let Model = function(field_values){
+		// Define fields of the model
+		this._fields = {};
+		this._dirty  = true;
 
-		set: function(target, name, value){
-			if(target._fields[name] !== undefined){
-				target._fields[name] = value;
-				target.markAsDirty();
-				return true;
-			} else {
-				target[name] = value;
-				return true;
+		// Ensure all fields have placeholder value
+		this._fields.id = 0; // 0 indicates not saved in db
+		for(let f of model_fields){
+			this._fields[f] = null;
+		}
+
+		// Initialize values of the fields
+		if(field_values !== undefined){
+			for(let f in field_values){
+				if(this._fields[f] === undefined){
+					throw "Attempted to specify value for non-existent field: " + f;
+				}
+				this._fields[f] = field_values[f];
 			}
+		}
+
+		// Define this.id field as a proxy for the internal this._fields.id field
+		// This can be 'got' only (IE: no set).
+		// It is set automatically when the instance is saved to the database
+		// and can't be modified else we may insert new instances/overwrite other
+		// instances when calling .save()
+		Object.defineProperty(this, 'id', {
+			configurable : false,
+			enumerable   : true,
+			get          : function() {
+				return this._fields.id;
+			},
+		});
+
+		// And define the rest of the field accessors,
+		// also proxies for the internal this._fields.xxx
+		for(let field of model_fields) {
+			Object.defineProperty(this, field, {
+				configurable : false,
+				enumerable   : true,
+
+				get: function(){ return this._fields[field]; },
+				set: function(value){
+					this._fields[field] = value;
+					this.markAsDirty();
+				}
+			});
 		}
 	};
 
-	/////////////////////////////////////////////////
-	// Define basic properties of the Model
-	let Model = {
-		_queries       : {}, // cache of sql statements
+	Model._queries = {}; // cache of sql statements
+	Model.getTableName   = (function(){ return table_name;    });
+	Model.getFieldNames  = (function(){ return model_fields;  });
+	Model.getIdFieldName = (function(){ return id_field_name; });
 
-		getTableName   : () => { return table_name;    },
-		getFieldNames  : () => { return model_fields;  },
-		getIdFieldName : () => { return id_field_name; },
+	/////////////////////////////////////////////////////////////////////
+	/// \brief Creates a new instance of Model and persists it to the database
+	/// \return Promise which resolves to the model instance after it has
+	/// been saved
+	/////////////////////////////////////////////////////////////////////
+	Model.create = function(dbh, field_values){
+		let result = new Model(field_values);
+		return result.save(dbh);
+	};
 
-		create : function(field_values){
-			let model = Object.create(Model._instance_prototype);
+	/////////////////////////////////////////////////////////////////////
+	/// \brief Creates an instance of this model from a row loaded from the
+	/// database are returned by db-connection-promise.query
+	/////////////////////////////////////////////////////////////////////
+	Model.createFromRow = function(row){
+		let model = new Model();
 
-			// Define fields of the model
-			model._fields = {};
-			model._dirty  = true;
+		// Check id is availible and set
+		if(row[Model.getIdFieldName()] === undefined){
+			throw new Error("Cannot construct instance of " + Model.getTableName() +
+			                " since row is missing id field '" + Model.getIdFieldName() + "'");
+		}
+		model._fields.id = row[Model.getIdFieldName()];
 
-			// Ensure all fields have placeholder value
-			model._fields.id = 0; // 0 indicates not saved in db
-			for(let f of model_fields){
-				model._fields[f] = null;
-			}
-
-			// Initialize values of the fields
-			if(field_values !== undefined){
-				for(let f in field_values){
-					if(model._fields[f] === undefined){
-						throw "Attempted to specify value for non-existent field: " + f;
-					}
-					model._fields[f] = field_values[f];
-				}
-			}
-
-			return new Proxy(model, instance_proxy);
-		},
-
-		createFromRow : function(row){
-			let model = Model.create();
-
-			if(row[Model.getIdFieldName()] === undefined){
+		// Fill in values of other fields
+		for(let f of Model.getFieldNames()){
+			if(row[f] === undefined){
 				throw new Error("Cannot construct instance of " + Model.getTableName() +
-				                " since row is missing id field '" + Model.getIdFieldName() + "'");
+				                " since row is missing data field: " + f);
 			}
-			model._fields.id = row[Model.getIdFieldName()];
-
-			for(let f of Model.getFieldNames()){
-				if(row[f] === undefined){
-					throw new Error("Cannot construct instance of " + Model.getTableName() +
-					                " since row is missing data field: " + f);
-				}
-				model._fields[f] = row[f];
-			}
-
-			model._dirty = false;
-			return model;
-		},
-
-		_instance_prototype : {
-			isDirty     : function() { return this._dirty; },
-			markAsDirty : function() { this._dirty = true; },
-
-			getModel    : function() { return Model;       },
+			model._fields[f] = row[f];
 		}
+
+		// Ensure model is not marked as dirty
+		model._dirty = false;
+
+		return model;
 	};
+
+	/////////////////////////////////////////////////////////////////////
+	/// \brief Creates an instance of the model from a list of rows
+	/// as returned by database .query
+	/// \return Promise which will evaluate to an array of instances of this Model
+	/////////////////////////////////////////////////////////////////////
+	Model.createFromRows = function(rows) {
+		if(rows.rowCount != null && rows.rows != null && rows.fields != null){
+			// This this is the result directly from the database
+			rows = rows.rows;
+		}
+
+		let result = [];
+		for(let i = 0; i < rows.length; ++i) {
+			result[i] = this.createFromRow(rows[i]);
+		}
+		return result;
+	};
+
+	Model.prototype.isDirty     = function() { return this._dirty; };
+	Model.prototype.markAsDirty = function() { this._dirty = true; };
+	Model.prototype.getModel    = function() { return Model;       };
 
 	_attachQueryFunctions(Model);
 

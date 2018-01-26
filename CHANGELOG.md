@@ -1,3 +1,10 @@
+* Fri Jan 26 2018 Jamie Terry <jamie-terry@outlook.com> 0.4.0
+  - Add createFromRows method
+  - Make create() method also persist model to database
+  - Add constructor which creates instance without persisting to database (to replace old functionality of create)
+  - Ensure id field cannot be manually set - it is changed only when .save() is called on new instance
+* Thu Jan 18 2018 Jamie Terry <jamie-terry@outlook.com> 0.3.0
+  - Convert to using db-connection-promise, the successor of any-db-q
 * Fri Aug 18 2017 Jamie Terry <jamie-terry@outlook.com> 0.2.2
   - Add .npmignore
 * Fri Aug 18 2017 Jamie Terry <jamie-terry@outlook.com> 0.2.1

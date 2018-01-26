@@ -24,4 +24,5 @@ describe('nano-orm', () => {
 	importTest('model-properties');
 	importTest('create-instance');
 	importTest('load-save-update-delete');
+	importTest('find');
 });

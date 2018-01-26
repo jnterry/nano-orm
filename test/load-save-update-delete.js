@@ -71,14 +71,14 @@ function runTestsAgainstModel(User){
 	});
 
 	describe('save', () => {
-		it('Persist new instance', () => {
+		it('Persist new instance with save', () => {
 			let dbh = initUserTable();
 
 			return dbh
 				.then(() => {
-					let user = User.create({ username: 'Sarah',
-					                         password: 'cats'
-					                       });
+					let user = new User({ username: 'Sarah',
+					                      password: 'cats'
+					                    });
 					expect(user.id      ).is.deep.equal(0);
 					expect(user.username).is.deep.equal('Sarah');
 					expect(user.password).is.deep.equal('cats');
@@ -96,6 +96,29 @@ function runTestsAgainstModel(User){
 				.then((user) => {
 					// ID should now be filled in
 					expect(user.id).is.deep.equal(1);
+				})
+				.query(`SELECT * FROM user`)
+				.then((results) => {
+					expect(results.rowCount              ).is.deep.equal(1);
+					expect(results.rows[0][id_field_name]).is.deep.equal(1);
+					expect(results.rows[0].username      ).is.deep.equal('Sarah');
+					expect(results.rows[0].password      ).is.deep.equal('cats');
+				});
+		});
+
+		it('Persist new instance with create', () => {
+			let dbh = initUserTable();
+
+			return dbh
+				.then(() => User.create(dbh, { username: 'Sarah',
+				                               password: 'cats'
+				                             }
+				                       )
+				     )
+				.then((user) => {
+					expect(user.id      ).is.not.deep.equal(0);
+					expect(user.username).is.deep.equal('Sarah');
+					expect(user.password).is.deep.equal('cats');
 				})
 				.query(`SELECT * FROM user`)
 				.then((results) => {
