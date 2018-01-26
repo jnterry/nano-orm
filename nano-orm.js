@@ -53,14 +53,7 @@ function _attachQueryFunctions(ModelClass){
 		var query = ModelClass._queries.find_prefix + where_clause;
 		return dbh
 			.query(query, params)
-			.then((res) => {
-				var ops = [];
-				for(let i = 0; i < res.rows.length; ++i){
-					// :TODO:COMP: createFromRows function?
-					ops.push(ModelClass.createFromRow(res.rows[i]));
-				}
-				return dbh.then(() => Q.all(ops));
-			});
+			.then(ModelClass.createFromRows.bind(ModelClass));
 	};
 
 	///////////////////////////////
