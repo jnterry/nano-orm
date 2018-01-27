@@ -1,3 +1,5 @@
+* Sat Jan 27 2018 Jamie Terry <jamie-terry@outlook.com> 0.5.0
+  - Make toJSON include the field values only
 * Fri Jan 26 2018 Jamie Terry <jamie-terry@outlook.com> 0.4.0
   - Add createFromRows method
   - Make create() method also persist model to database

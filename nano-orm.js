@@ -231,6 +231,8 @@ function defineModel(table_name, model_fields, options){
 	Model.getFieldNames  = (function(){ return model_fields;  });
 	Model.getIdFieldName = (function(){ return id_field_name; });
 
+	Model.prototype.toJSON = function(){ return this._fields; };
+
 	/////////////////////////////////////////////////////////////////////
 	/// \brief Creates a new instance of Model and persists it to the database
 	/// \return Promise which resolves to the model instance after it has
