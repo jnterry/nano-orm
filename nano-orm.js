@@ -130,7 +130,7 @@ function _attachQueryFunctions(ModelClass){
 
 	ModelClass.prototype.delete = function(dbh){
 		// If not yet saved in database, do nothing
-		if(this.id === 0){ return Q(); }
+		if(this.id === 0){ return Q(this); }
 
 		return dbh
 			.query(ModelClass._queries.delete, this.id)
