@@ -285,6 +285,66 @@ function runTestsAgainstModel(User){
 				});
 		});
 
+		it('Can re-save a deleted instance', () => {
+			let dbh =  initUserTable();
+
+			return dbh
+				.query(`INSERT INTO user ` +
+				       `(` + id_field_name + `, username, password) VALUES
+				                         (1,'admin','admin'),
+                                 (2,'Bob',  'password'),
+                                 (3,'Tim',  '1234')`
+				      )
+				.then(() => {
+					return User
+						.load(dbh, 3)
+						.then((user) => {
+							expect(user.id).is.deep.equal(3);
+							return user.delete(dbh);
+						});
+				})
+				.then((user) => {
+					expect(user.id).is.deep.equal(0);
+
+					return dbh
+						.query(`SELECT * FROM user ORDER BY ` + id_field_name + ` ASC`)
+						.then((results) => {
+							expect(results.rowCount        ).is.deep.equal(2);
+
+							expect(results.rows[0][id_field_name]).is.deep.equal(1);
+							expect(results.rows[0].username      ).is.deep.equal('admin');
+							expect(results.rows[0].password      ).is.deep.equal('admin');
+
+							expect(results.rows[1][id_field_name]).is.deep.equal(2);
+							expect(results.rows[1].username      ).is.deep.equal('Bob');
+							expect(results.rows[1].password      ).is.deep.equal('password');
+
+							return user.save(dbh);
+						});
+				})
+				.then((user) => {
+					expect(user.id).is.not.deep.equal(0);
+					expect(user.id).is.not.deep.equal(1);
+					expect(user.id).is.not.deep.equal(2);
+				})
+				.query(`SELECT * FROM user ORDER BY ` + id_field_name + ` ASC`)
+				.then((results) => {
+					expect(results.rowCount        ).is.deep.equal(3);
+
+					expect(results.rows[0][id_field_name]).is.deep.equal(1);
+					expect(results.rows[0].username      ).is.deep.equal('admin');
+					expect(results.rows[0].password      ).is.deep.equal('admin');
+
+					expect(results.rows[1][id_field_name]).is.deep.equal(2);
+					expect(results.rows[1].username      ).is.deep.equal('Bob');
+					expect(results.rows[1].password      ).is.deep.equal('password');
+
+					expect(results.rows[2][id_field_name]).is.above(2);
+					expect(results.rows[2].username      ).is.deep.equal('Tim');
+					expect(results.rows[2].password      ).is.deep.equal('1234');
+				});
+		});
+
 
 		//:TODO: implement this - not sure how without doing second DB query
 		//since any-db doesn't indicate number of rows affected by a query

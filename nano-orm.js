@@ -135,8 +135,9 @@ function _attachQueryFunctions(ModelClass){
 		return dbh
 			.query(ModelClass._queries.delete, this.id)
 			.then((instance) => {
-				instance.id = 0;
-				return instance;
+				this._fields.id = 0;
+				this._dirty = true;
+				return this;
 			});
 	};
 }
