@@ -36,8 +36,6 @@ function defineModel(table_name, model_fields, options){
 
 	model_fields = _convertToDetailedFieldDescriptors(model_fields);
 
-	console.dir(model_fields);
-
 	for(let i = 0; i < model_fields.length; ++i){
 		for(let j = i+1; j < model_fields.length; ++j){
 			if(model_fields[i].name === model_fields[j].name){
@@ -176,6 +174,7 @@ function defineModel(table_name, model_fields, options){
 	Model.prototype.getModel    = function() { return Model;       };
 
 	_attachQueryFunctions(Model);
+	_attachJsonSchema    (Model, model_fields);
 
 	return Model;
 }
@@ -334,4 +333,28 @@ function _convertToDetailedFieldDescriptors(model_fields){
 			return field;
 		}
 	});
-}
+};
+
+function _attachJsonSchema(Model, model_fields){
+	let schema = {
+		name       : Model.getTableName(),
+		properties : {},
+		required   : [],
+	};
+
+	for(let field of model_fields){
+		schema.properties[field.name] = JSON.parse(JSON.stringify(field));
+
+		if(field.required !== undefined) {
+			if(field.required){
+				schema.required.push(field.name);
+			}
+			delete schema.properties[field.name].required;
+		}
+
+		delete schema.properties[field.name].name;
+	}
+
+	Model.schema           = schema;
+	Model.prototype.schema = schema;
+};
