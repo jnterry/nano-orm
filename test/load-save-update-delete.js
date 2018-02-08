@@ -91,18 +91,32 @@ function runTestsAgainstModel(User){
 
 							// ...and then save it
 							return user.save(dbh);
+						})
+						.then((user) => {
+							// ID should now be filled in
+							expect(user.id    ).is.deep.equal(1);
+							expect(user._dirty).is.deep.equal(false);
+						})
+						.query(`SELECT * FROM user`)
+						.then((results) => {
+							expect(results.rowCount              ).is.deep.equal(1);
+							expect(results.rows[0][id_field_name]).is.deep.equal(1);
+							expect(results.rows[0].username      ).is.deep.equal('Sarah');
+							expect(results.rows[0].password      ).is.deep.equal('cats');
+
+							return user.save(dbh);
+						}).then((user) => {
+							// ID should not have changed
+							expect(user.id    ).is.deep.equal(1);
+							expect(user._dirty).is.deep.equal(false);
+						})
+						.query(`SELECT * FROM user`)
+						.then((results) => {
+							expect(results.rowCount              ).is.deep.equal(1);
+							expect(results.rows[0][id_field_name]).is.deep.equal(1);
+							expect(results.rows[0].username      ).is.deep.equal('Sarah');
+							expect(results.rows[0].password      ).is.deep.equal('cats');
 						});
-				})
-				.then((user) => {
-					// ID should now be filled in
-					expect(user.id).is.deep.equal(1);
-				})
-				.query(`SELECT * FROM user`)
-				.then((results) => {
-					expect(results.rowCount              ).is.deep.equal(1);
-					expect(results.rows[0][id_field_name]).is.deep.equal(1);
-					expect(results.rows[0].username      ).is.deep.equal('Sarah');
-					expect(results.rows[0].password      ).is.deep.equal('cats');
 				});
 		});
 
