@@ -37,6 +37,12 @@ describe('constructor', () => {
 		expect(user.username).is.deep.equal('Jim');
 		expect(user.password).is.deep.equal('123');
 	});
+
+	it('Specifying value of non-existent field will fail', () => {
+		expect(() => {
+			return new User({password: '123', username: 'Jim', thing: 3});
+		}).to.throw();
+	});
 });
 
 describe('createFromRow', () => {
