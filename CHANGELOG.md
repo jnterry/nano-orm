@@ -1,3 +1,6 @@
+* Thu Feb 08 2018 Jamie Terry <jamie-terry@outlook.com> 0.6.0
+  - Add a .schema property which is automatically generated and conforms to the "JSON Schema" specification
+  - Increase test coverage to 100%
 * Sat Jan 27 2018 Jamie Terry <jamie-terry@outlook.com> 0.5.0
   - Make toJSON include the field values only
 * Fri Jan 26 2018 Jamie Terry <jamie-terry@outlook.com> 0.4.0
