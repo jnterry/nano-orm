@@ -345,14 +345,12 @@ function _attachJsonSchema(Model, model_fields){
 	for(let field of model_fields){
 		schema.properties[field.name] = JSON.parse(JSON.stringify(field));
 
-		if(field.required !== undefined) {
-			if(field.required){
-				schema.required.push(field.name);
-			}
-			delete schema.properties[field.name].required;
+		if(field.required){
+			schema.required.push(field.name);
 		}
 
 		delete schema.properties[field.name].name;
+		delete schema.properties[field.name].required;
 	}
 
 	Model.schema           = schema;
