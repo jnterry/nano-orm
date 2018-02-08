@@ -18,7 +18,6 @@ describe('Bad model_fields', () => {
 		}).to.throw();
 	});
 
-
 	it('null', () => {
 		expect(() => {
 			nano_orm.defineModel('user', null);
@@ -52,6 +51,24 @@ describe('Bad model_fields', () => {
 	it('Object without name field after valid descriptor', () => {
 		expect(() => {
 			nano_orm.defineModel('user', [{name: 'username'}, {}]);
+		}).to.throw();
+	});
+
+	it('Duplicate field name', () => {
+		expect(() => {
+			nano_orm.defineModel('user', ['username', 'password', 'username']);
+		}).to.throw();
+	});
+
+	it('Duplicate field name with object descriptor', () => {
+		expect(() => {
+			nano_orm.defineModel('user', [{ name: 'username' }, { name: 'password' }, { name: 'username' }]);
+		}).to.throw();
+	});
+
+	it('Duplicate field name mixed', () => {
+		expect(() => {
+			nano_orm.defineModel('user', ['username', { name: 'password' }, { name: 'username' }]);
 		}).to.throw();
 	});
 });
