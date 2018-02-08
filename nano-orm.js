@@ -12,6 +12,181 @@
 
 let Q = require('q');
 
+//////////////////////////////////////////////////////////////////////////////
+/// \brief Creates a new Model
+/// \param table_name   The name of the database table this model wraps
+/// \param model_fields Array of field descriptors. Order must be the same as
+/// the order of columns in the database. Each field descriptor may be either a
+/// strings representing the field name, or objects of the form:
+/// { name     : <string>,
+///   required : <boolean>,
+///   // any options valid in a JSON schema
+/// }
+/// \param options JSON object representing additional options for the model
+///        - id_field -> Name of the id field, defaults to 'id'
+//////////////////////////////////////////////////////////////////////////////
+function defineModel(table_name, model_fields, options){
+	//console.info("Creating Model for table: '" + table_name + "'");
+
+	/////////////////////////////////////////////////
+	// Check and pre-process parameters to this function
+	if(model_fields == null || model_fields.length === 0){
+		throw "No model_fields specified for table: '" + table_name + "'";
+	}
+
+	model_fields = _convertToDetailedFieldDescriptors(model_fields);
+
+	for(let i = 0; i < model_fields.length; ++i){
+		for(let j = i+1; j < model_fields.length; ++j){
+			if(model_fields[i].name === model_fields[j].name){
+				throw "Duplicate field name '" + model_fields[i].name +
+					"' in model for table: " + table_name;
+			}
+		}
+	}
+
+	let id_field_name = "id";
+	if(options && options.id_field){ id_field_name = options.id_field; }
+
+	/////////////////////////////////////////////////////////////////////
+	/// \brief Constructor which creates new instance of some model
+	/// \param field_values Object representing the values to use for the
+	/// fields of the model. Any fields that are not specified will be assigned
+	/// null. If extra values are put in field_values for which a field does
+	/// not actually exist, then this method will throw.
+	/////////////////////////////////////////////////////////////////////
+	let Model = function(field_values){
+		// Define fields of the model
+		this._fields = {};
+		this._dirty  = true;
+
+		// Ensure all fields have placeholder value
+		this._fields.id = 0; // 0 indicates not saved in db
+		for(let f of model_fields){
+			this._fields[f.name] = null;
+		}
+
+		// Initialize values of the fields
+		if(field_values !== undefined){
+			for(let f in field_values){
+				if(this._fields[f] === undefined){
+					throw "Attempted to specify value for non-existent field: " + f;
+				}
+				this._fields[f] = field_values[f];
+			}
+		}
+
+		// Define this.id field as a proxy for the internal this._fields.id field
+		// This can be 'got' only (IE: no set).
+		// It is set automatically when the instance is saved to the database
+		// and can't be modified else we may insert new instances/overwrite other
+		// instances when calling .save()
+		Object.defineProperty(this, 'id', {
+			configurable : false,
+			enumerable   : true,
+			get          : function() {
+				return this._fields.id;
+			},
+		});
+
+		// And define the rest of the field accessors,
+		// also proxies for the internal this._fields.xxx
+		for(let field of model_fields) {
+			Object.defineProperty(this, field.name, {
+				configurable : false,
+				enumerable   : true,
+
+				get: function(){ return this._fields[field.name]; },
+				set: function(value){
+					this._fields[field.name] = value;
+					this.markAsDirty();
+				}
+			});
+		}
+	};
+
+	Model._queries = {}; // cache of sql statements
+	Model.getTableName   = (function(){ return table_name;                      });
+	Model.getFieldNames  = (function(){ return model_fields.map((f) => f.name); });
+	Model.getIdFieldName = (function(){ return id_field_name;                   });
+
+	Model.prototype.toJSON = function(){ return this._fields; };
+
+	/////////////////////////////////////////////////////////////////////
+	/// \brief Creates a new instance of Model and persists it to the database
+	/// \return Promise which resolves to the model instance after it has
+	/// been saved
+	/////////////////////////////////////////////////////////////////////
+	Model.create = function(dbh, field_values){
+		let result = new Model(field_values);
+		return result.save(dbh);
+	};
+
+	/////////////////////////////////////////////////////////////////////
+	/// \brief Creates an instance of this model from a row loaded from the
+	/// database are returned by db-connection-promise.query
+	/////////////////////////////////////////////////////////////////////
+	Model.createFromRow = function(row){
+		let model = new Model();
+
+		// Check id is availible and set
+		if(row[Model.getIdFieldName()] === undefined){
+			throw new Error("Cannot construct instance of " + Model.getTableName() +
+			                " since row is missing id field '" + Model.getIdFieldName() + "'");
+		}
+		model._fields.id = row[Model.getIdFieldName()];
+
+		// Fill in values of other fields
+		for(let f of Model.getFieldNames()){
+			if(row[f] === undefined){
+				throw new Error("Cannot construct instance of " + Model.getTableName() +
+				                " since row is missing data field: " + f);
+			}
+			model._fields[f] = row[f];
+		}
+
+		// Ensure model is not marked as dirty
+		model._dirty = false;
+
+		return model;
+	};
+
+	/////////////////////////////////////////////////////////////////////
+	/// \brief Creates an instance of the model from a list of rows
+	/// as returned by database .query
+	/// \return Promise which will evaluate to an array of instances of this Model
+	/////////////////////////////////////////////////////////////////////
+	Model.createFromRows = function(rows) {
+		if(rows.rowCount != null && rows.rows != null && rows.fields != null){
+			// This this is the result directly from the database
+			rows = rows.rows;
+		}
+
+		let result = [];
+		for(let i = 0; i < rows.length; ++i) {
+			result[i] = this.createFromRow(rows[i]);
+		}
+		return result;
+	};
+
+	Model.prototype.isDirty     = function() { return this._dirty; };
+	Model.prototype.markAsDirty = function() { this._dirty = true; };
+	Model.prototype.getModel    = function() { return Model;       };
+
+	_attachQueryFunctions(Model);
+	_attachJsonSchema    (Model, model_fields);
+
+	return Model;
+}
+
+module.exports = {
+	defineModel           : defineModel,
+};
+
+////////////////////////////////////////////////////////////////////////////////
+// Helper functions below
+////////////////////////////////////////////////////////////////////////////////
+
 function _attachQueryFunctions(ModelClass){
 	///////////////////////////////
 	// Load query
@@ -130,175 +305,55 @@ function _attachQueryFunctions(ModelClass){
 
 	ModelClass.prototype.delete = function(dbh){
 		// If not yet saved in database, do nothing
-		if(this.id === 0){ return Q(); }
+		if(this.id === 0){ return Q(this); }
 
 		return dbh
 			.query(ModelClass._queries.delete, this.id)
 			.then((instance) => {
-				instance.id = 0;
-				return instance;
+				this._fields.id = 0;
+				this._dirty     = true;
+				return this;
 			});
 	};
 }
 
-//////////////////////////////////////////////////////////////////////////////
-/// \brief Creates a new Model
-/// \param table_name   The name of the database table this model wraps
-/// \param model_fields List of strings representing the fields of the model
-/// \param options JSON object representing additional options for the model
-///        - id_field -> Name of the id field, defaults to 'id'
-//////////////////////////////////////////////////////////////////////////////
-function defineModel(table_name, model_fields, options){
-	//console.info("Creating Model for table: '" + table_name + "'");
+function _convertToDetailedFieldDescriptors(model_fields){
+	return model_fields.map((field) => {
+		if(typeof field === 'string'){
+			return {
+				name     : field,
+				required : true,
+			};
+		} else {
+			if(field.name == null || typeof field.name != 'string' || field.name.length == 0){
+				throw "Field descriptor object MUST have a name property";
+			}
+			if(field.required === undefined){
+				field.required = true;
+			}
+			return field;
+		}
+	});
+};
 
-	/////////////////////////////////////////////////
-	// Check and preprocess parameters to this function
-	if(model_fields == null || model_fields.length === 0){
-		throw "No model_fields specified for table: '" + table_name + "'";
+function _attachJsonSchema(Model, model_fields){
+	let schema = {
+		name       : Model.getTableName(),
+		properties : {},
+		required   : [],
+	};
+
+	for(let field of model_fields){
+		schema.properties[field.name] = JSON.parse(JSON.stringify(field));
+
+		if(field.required){
+			schema.required.push(field.name);
+		}
+
+		delete schema.properties[field.name].name;
+		delete schema.properties[field.name].required;
 	}
 
-	for(let i = 0; i < model_fields.length; ++i){
-		for(let j = i+1; j < model_fields.length; ++j){
-			if(model_fields[i] === model_fields[j]){
-				throw "Duplicate field name '" + model_fields[i] +
-					"' in model for table: " + table_name;
-			}
-		}
-	}
-
-	let id_field_name = "id";
-	if(options && options.id_field){ id_field_name = options.id_field; }
-
-	/////////////////////////////////////////////////////////////////////
-	/// \brief Constructor which creates new instance of some model
-	/// \param field_values Object representing the values to use for the
-	/// fields of the model. Any fields that are not specified will be assigned
-	/// null. If extra values are put in field_values for which a field does
-	/// not actually exist, then this method will throw.
-	/////////////////////////////////////////////////////////////////////
-	let Model = function(field_values){
-		// Define fields of the model
-		this._fields = {};
-		this._dirty  = true;
-
-		// Ensure all fields have placeholder value
-		this._fields.id = 0; // 0 indicates not saved in db
-		for(let f of model_fields){
-			this._fields[f] = null;
-		}
-
-		// Initialize values of the fields
-		if(field_values !== undefined){
-			for(let f in field_values){
-				if(this._fields[f] === undefined){
-					throw "Attempted to specify value for non-existent field: " + f;
-				}
-				this._fields[f] = field_values[f];
-			}
-		}
-
-		// Define this.id field as a proxy for the internal this._fields.id field
-		// This can be 'got' only (IE: no set).
-		// It is set automatically when the instance is saved to the database
-		// and can't be modified else we may insert new instances/overwrite other
-		// instances when calling .save()
-		Object.defineProperty(this, 'id', {
-			configurable : false,
-			enumerable   : true,
-			get          : function() {
-				return this._fields.id;
-			},
-		});
-
-		// And define the rest of the field accessors,
-		// also proxies for the internal this._fields.xxx
-		for(let field of model_fields) {
-			Object.defineProperty(this, field, {
-				configurable : false,
-				enumerable   : true,
-
-				get: function(){ return this._fields[field]; },
-				set: function(value){
-					this._fields[field] = value;
-					this.markAsDirty();
-				}
-			});
-		}
-	};
-
-	Model._queries = {}; // cache of sql statements
-	Model.getTableName   = (function(){ return table_name;    });
-	Model.getFieldNames  = (function(){ return model_fields;  });
-	Model.getIdFieldName = (function(){ return id_field_name; });
-
-	Model.prototype.toJSON = function(){ return this._fields; };
-
-	/////////////////////////////////////////////////////////////////////
-	/// \brief Creates a new instance of Model and persists it to the database
-	/// \return Promise which resolves to the model instance after it has
-	/// been saved
-	/////////////////////////////////////////////////////////////////////
-	Model.create = function(dbh, field_values){
-		let result = new Model(field_values);
-		return result.save(dbh);
-	};
-
-	/////////////////////////////////////////////////////////////////////
-	/// \brief Creates an instance of this model from a row loaded from the
-	/// database are returned by db-connection-promise.query
-	/////////////////////////////////////////////////////////////////////
-	Model.createFromRow = function(row){
-		let model = new Model();
-
-		// Check id is availible and set
-		if(row[Model.getIdFieldName()] === undefined){
-			throw new Error("Cannot construct instance of " + Model.getTableName() +
-			                " since row is missing id field '" + Model.getIdFieldName() + "'");
-		}
-		model._fields.id = row[Model.getIdFieldName()];
-
-		// Fill in values of other fields
-		for(let f of Model.getFieldNames()){
-			if(row[f] === undefined){
-				throw new Error("Cannot construct instance of " + Model.getTableName() +
-				                " since row is missing data field: " + f);
-			}
-			model._fields[f] = row[f];
-		}
-
-		// Ensure model is not marked as dirty
-		model._dirty = false;
-
-		return model;
-	};
-
-	/////////////////////////////////////////////////////////////////////
-	/// \brief Creates an instance of the model from a list of rows
-	/// as returned by database .query
-	/// \return Promise which will evaluate to an array of instances of this Model
-	/////////////////////////////////////////////////////////////////////
-	Model.createFromRows = function(rows) {
-		if(rows.rowCount != null && rows.rows != null && rows.fields != null){
-			// This this is the result directly from the database
-			rows = rows.rows;
-		}
-
-		let result = [];
-		for(let i = 0; i < rows.length; ++i) {
-			result[i] = this.createFromRow(rows[i]);
-		}
-		return result;
-	};
-
-	Model.prototype.isDirty     = function() { return this._dirty; };
-	Model.prototype.markAsDirty = function() { this._dirty = true; };
-	Model.prototype.getModel    = function() { return Model;       };
-
-	_attachQueryFunctions(Model);
-
-	return Model;
-}
-
-module.exports = {
-	defineModel           : defineModel,
+	Model.schema           = schema;
+	Model.prototype.schema = schema;
 };
