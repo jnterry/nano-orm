@@ -69,6 +69,8 @@ function defineModel(table_name, model_fields, options){
 	let id_field_name = "id";
 	if(options && options.id_field){ id_field_name = options.id_field; }
 
+	let field_mappers = _generateMappingFunctions(model_fields);
+
 	/**
 	 * Creates a new instance of the Model with specified values for fields.
 	 * This function will NEVER affect the database itself.
@@ -97,7 +99,11 @@ function defineModel(table_name, model_fields, options){
 				if(this._fields[f] === undefined){
 					throw "Attempted to specify value for non-existent field: " + f;
 				}
-				this._fields[f] = field_values[f];
+				if(typeof field_values[f] === 'string'){
+					this._fields[f] = field_mappers[f].fromDb(field_values[f]);
+				} else {
+					this._fields[f] = field_values[f];
+				}
 			}
 		}
 
@@ -130,7 +136,7 @@ function defineModel(table_name, model_fields, options){
 		}
 	};
 
-	_attachMappingFunctions(Model, model_fields);
+	Model._mappers = field_mappers;
 
 	Model._queries = {}; // cache of sql statements
 
@@ -494,15 +500,16 @@ function _attachJsonSchema(Model, model_fields){
 	Model.prototype.schema = schema;
 };
 
-function _attachMappingFunctions(Model, model_fields){
-	Model._mappers = {};
+function _generateMappingFunctions(model_fields){
+	let result = {};
 	for(let field of model_fields){
 		if(field.type === 'datetime'){
-			Model._mappers[field.name] = _mapperDate;
+			result[field.name] = _mapperDate;
 		} else {
-			Model._mappers[field.name] = _mapperNoop;
+			result[field.name] = _mapperNoop;
 		}
 	}
+	return result;
 }
 
 let _mapperNoop = {

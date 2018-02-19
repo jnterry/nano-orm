@@ -8,6 +8,8 @@
 
 require('./common');
 
+let moment = require('moment');
+
 function initEventTable(){
 	let dbh = getDbConnection();
 	return dbh
@@ -28,34 +30,89 @@ let EventNoMap = nano_orm.defineModel('event', [{ name: 'datetime', type : 'stri
 let Event      = nano_orm.defineModel('event', [{ name: 'datetime', type : 'datetime' }, 'what']);
 
 describe("Datetime field", () => {
-	it('Load Datetime no map', () => {
-		let dbh = initEventTable();
 
-		return EventNoMap.load(dbh, 1)
-			.then((event) => {
-				expect(event         ).does.exist;
-				expect(event.id      ).is.deep.equal(1);
-				expect(event.what    ).is.deep.equal('Christmas');
-				expect(event.datetime).is.deep.equal('2010-12-25 10:00:00');
+	describe("Constructor", () => {
+		it('No map', () => {
+			let event = new EventNoMap({
+				datetime : '2018-02-19 22:55:46',
+				what     : 'Right now'
 			});
+
+			expect(event         ).does.exist;
+			expect(event.id      ).is.deep.equal(0);
+			expect(event.what    ).is.deep.equal('Right now');
+			expect(event.datetime).is.deep.equal('2018-02-19 22:55:46');
+		});
+
+		it('With map from string', () => {
+			let event = new Event({
+				datetime : '2018-02-19 22:55:46',
+				what     : 'Right now'
+			});
+
+			expect(event         ).does.exist;
+			expect(event.id      ).is.deep.equal(0);
+			expect(event.what    ).is.deep.equal('Right now');
+
+			expect(event.datetime.year       ()).is.deep.equal(2018);
+			expect(event.datetime.month      ()).is.deep.equal(   1);
+			expect(event.datetime.date       ()).is.deep.equal(  19);
+			expect(event.datetime.hour       ()).is.deep.equal(  22);
+			expect(event.datetime.minute     ()).is.deep.equal(  55);
+			expect(event.datetime.second     ()).is.deep.equal(  46);
+			expect(event.datetime.millisecond()).is.deep.equal(   0);
+		});
+
+		it('With map from moment instance', () => {
+			let event = new Event({
+				datetime : moment(1476959025678).utc(),
+				what     : 'A time'
+			});
+
+			expect(event         ).does.exist;
+			expect(event.id      ).is.deep.equal(0);
+			expect(event.what    ).is.deep.equal('A time');
+
+			expect(event.datetime.year       ()).is.deep.equal(2016);
+			expect(event.datetime.month      ()).is.deep.equal(   9);
+			expect(event.datetime.date       ()).is.deep.equal(  20);
+			expect(event.datetime.hour       ()).is.deep.equal(  10);
+			expect(event.datetime.minute     ()).is.deep.equal(  23);
+			expect(event.datetime.second     ()).is.deep.equal(  45);
+			expect(event.datetime.millisecond()).is.deep.equal( 678);
+		});
 	});
 
-	it('Load Datetime with map', () => {
-		let dbh = initEventTable();
+	describe("Load from Database", () => {
+		it('Load Datetime no map', () => {
+			let dbh = initEventTable();
 
-		return Event.load(dbh, 1)
-			.then((event) => {
-				expect(event     ).does.exist;
-				expect(event.id  ).is.deep.equal(1);
-				expect(event.what).is.deep.equal('Christmas');
+			return EventNoMap.load(dbh, 1)
+				.then((event) => {
+					expect(event         ).does.exist;
+					expect(event.id      ).is.deep.equal(1);
+					expect(event.what    ).is.deep.equal('Christmas');
+					expect(event.datetime).is.deep.equal('2010-12-25 10:00:00');
+				});
+		});
 
-				expect(event.datetime.year       ()).is.deep.equal(2010);
-				expect(event.datetime.month      ()).is.deep.equal(  11);
-				expect(event.datetime.date       ()).is.deep.equal(  25);
-				expect(event.datetime.hour       ()).is.deep.equal(  10);
-				expect(event.datetime.minute     ()).is.deep.equal(   0);
-				expect(event.datetime.second     ()).is.deep.equal(   0);
-				expect(event.datetime.millisecond()).is.deep.equal(   0);
-			});
+		it('Load Datetime with map', () => {
+			let dbh = initEventTable();
+
+			return Event.load(dbh, 1)
+				.then((event) => {
+					expect(event     ).does.exist;
+					expect(event.id  ).is.deep.equal(1);
+					expect(event.what).is.deep.equal('Christmas');
+
+					expect(event.datetime.year       ()).is.deep.equal(2010);
+					expect(event.datetime.month      ()).is.deep.equal(  11);
+					expect(event.datetime.date       ()).is.deep.equal(  25);
+					expect(event.datetime.hour       ()).is.deep.equal(  10);
+					expect(event.datetime.minute     ()).is.deep.equal(   0);
+					expect(event.datetime.second     ()).is.deep.equal(   0);
+					expect(event.datetime.millisecond()).is.deep.equal(   0);
+				});
+		});
 	});
 });
