@@ -34,6 +34,9 @@ let moment = require('moment');
  * - number
  * - boolean
  * - datetime
+ * If set to datetime then the field will be automatically converted to a moment
+ * instance. This will be automatically converted back into SQL datetime format
+ * when persisted to the database.
  *
  * @param {string} [model_fields[].format] -
  *
