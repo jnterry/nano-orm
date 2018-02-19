@@ -9,7 +9,6 @@ _Tiny wrapper layer for loading and persisting Models from SQL databases using a
 
 The package number will be bumped to 1.0.0 for the initial release, todo before then:
 - Release [any-db-q](https://github.com/jnterry/any-db-q)
-- Documentation
 - Test usage of this in a real project
 - Explore concept of extensions (mini-modules that add methods to the prototypes of models to offer enhanced functionality)
 - Unit tests
@@ -65,15 +64,3 @@ More complete examples can be found in the /examples directory.
 
 - Auto-updated 'created\_at' and 'updated\_at' fields
 - Load instances with IDs in some set
-
-## Installation
-
-:TODO: document
-
-## Model Methods
-
-:TODO: document
-
-## Instance Methods
-
-:TODO: document
