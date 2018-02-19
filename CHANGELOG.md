@@ -1,3 +1,6 @@
+* Mon Feb 19 2018 Jamie Terry <jamie-terry@outlook.com> 0.7.0
+  - Add support for "datetime" fields - automatically parse database string into moment instance
+  - Add jsdoc style documentation
 * Thu Feb 08 2018 Jamie Terry <jamie-terry@outlook.com> 0.6.0
   - Add a .schema property which is automatically generated and conforms to the "JSON Schema" specification
   - Increase test coverage to 100%
