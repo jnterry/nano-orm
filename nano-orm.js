@@ -130,7 +130,8 @@ function defineModel(table_name, model_fields, options){
 	Model.getTableName   = (function(){ return table_name;                      });
 
 	/**
-	 * @note This does not include the name of the id field
+	 * Retrieves list of field names in the Model; NOTE: this does not include the
+	 * name of the id field
 	 * @see {@link Model.getIdFieldName}
 	 *
 	 * @return {string[]} Array of field names in this model
@@ -138,9 +139,9 @@ function defineModel(table_name, model_fields, options){
 	Model.getFieldNames  = (function(){ return model_fields.map((f) => f.name); });
 
 	/**
-	 * Retrieves the name of the id field for this model
+	 * Retrieves the name of the id field for this model.
 	 *
-	 * @note instance.id can always be used to access the value of the id - this
+	 * instance.id can always be used to access the value of the id - this
 	 * function is useful only if writing plain SQL queries that require the id
 	 * field name
 	 *
@@ -179,8 +180,8 @@ function defineModel(table_name, model_fields, options){
 	 * Creates a new instance of Model from a row of data retrieved from the
 	 * database
 	 *
-	 * @note In general users of nano-orm should prefer methods such as find()
-	 * or load(), however this may be used to create an instance if you need to
+	 * In general users of nano-orm should prefer methods such as find() or
+	 * load(), however this may be used to create an instance if you need to
 	 * use custom SQL queries to load a Model instance
 	 *
 	 * @param row {object} - Row of data returned from the database
@@ -251,7 +252,7 @@ function defineModel(table_name, model_fields, options){
 	 * Marks the model instance as dirty - IE: differs from the corresponding
 	 * entry in the database.
 	 *
-	 * @note It is uncommon to need to call this method - modifying any field
+	 * It is uncommon to need to call this method - modifying any field
 	 * values will automatically set the Model instance as dirty
 	 */
 	Model.prototype.markAsDirty = function() { this._dirty = true; };
@@ -404,14 +405,14 @@ function defineModel(table_name, model_fields, options){
 	//console.info("  Made delete statement: " + Model._queries.delete);
 
 	/**
-	 * Deletes an instance from the database by id
+	 * Deletes an instance from the database by id.
+	 *
+	 * Due to the underlying database implementation there is no way to
+	 * test if this operation succeeded - IE: if there does not exist an instance
+	 * with the specified row this method will act as a no-op
 	 *
 	 * @param dbh {DbConnectionPromise} - Handle to the database
 	 * @param id - The id of the instance to delete
-	 *
-	 * @note Due to the underlying database implementation there is no way to
-	 * test if this operation succeeded - IE: if there does not exist an instance
-	 * with the specified row this method will act as a no-op
 	 */
 	Model.delete = function(dbh, id){
 		return dbh.query(Model._queries.delete, [id]);
