@@ -115,4 +115,46 @@ describe("Datetime field", () => {
 				});
 		});
 	});
+
+	describe("Save to database", () => {
+		it('Save datetime no map', () => {
+			let dbh = initEventTable();
+
+			let event = new EventNoMap({ datetime: '2000-05-10 12:34:45', what : 'thing'});
+			return event
+				.save(dbh)
+				.then((event) => {
+					expect(event.datetime).deep.equal('2000-05-10 12:34:45');
+					return dbh.query('SELECT * FROM event WHERE id = ?', event.id);
+				})
+				.then((rows) => {
+					expect(rows.rowCount).deep.equal(1);
+					expect(rows.rows[0].datetime).deep.equal('2000-05-10 12:34:45');
+
+					let event = EventNoMap.createFromRow(rows.rows[0]);
+
+					expect(event.datetime).deep.equal('2000-05-10 12:34:45');
+				});
+		});
+
+		it('Save datetime with map', () => {
+			let dbh = initEventTable();
+
+			let event = new Event({ datetime: '2000-05-10 12:34:45', what : 'thing'});
+			return event
+				.save(dbh)
+				.then((event) => {
+					expect(event.datetime.year()).deep.equal(2000);
+					return dbh.query('SELECT * FROM event WHERE id = ?', event.id);
+				})
+				.then((rows) => {
+					expect(rows.rowCount).deep.equal(1);
+					expect(rows.rows[0].datetime).deep.equal('2000-05-10 12:34:45.000000');
+
+					let event = Event.createFromRow(rows.rows[0]);
+
+					expect(event.datetime.year()).deep.equal(2000);
+				});
+		});
+	});
 });

@@ -384,7 +384,7 @@ function defineModel(table_name, model_fields, options){
 		let params = Model
 		    .getFieldNames()
 		    .map((f) => {
-			    return this._fields[f];
+			    return Model._mappers[f].toDb(this._fields[f]);
 		    });
 
 		////////////////////////////////////////////
