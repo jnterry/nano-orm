@@ -11,7 +11,7 @@ The package number will be bumped to 1.0.0 for the initial release, todo before 
 - Release [any-db-q](https://github.com/jnterry/any-db-q)
 - Test usage of this in a real project
 - Explore concept of extensions (mini-modules that add methods to the prototypes of models to offer enhanced functionality)
-- Unit tests
+- Auto-updated created_at and modified_at fields
 
 ## Motivation and Who is This For?
 
