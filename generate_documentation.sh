@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Generates documentation for nano-orm - do "npm install -g jsdoc" first
+# Generates documentation for nano-orm
 
 set -e
 
@@ -10,4 +10,8 @@ popd > /dev/null
 
 rm -rf ${SCRIPTDIR}/docs/
 
-jsdoc ${SCRIPTDIR}/nano-orm.js -R ${SCRIPTDIR}/README.md -d ${SCRIPTDIR}/docs/
+$SCRIPTDIR/node_modules/jsdoc/jsdoc.js \
+		${SCRIPTDIR}/nano-orm.js \
+		-R ${SCRIPTDIR}/README.md \
+		-d ${SCRIPTDIR}/docs/ \
+		-t ${SCRIPTDIR}/node_modules/minami \
