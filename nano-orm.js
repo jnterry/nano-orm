@@ -12,21 +12,6 @@
 
 let Q = require('q');
 
-//////////////////////////////////////////////////////////////////////////////
-/// \brief Creates a new Model
-/// \param table_name   The name of the database table this model wraps
-/// \param model_fields Array of field descriptors. Order must be the same as
-/// the order of columns in the database. Each field descriptor may be either a
-/// strings representing the field name, or objects of the form:
-/// { name     : <string>,
-///   required : <boolean>,
-///   // any options valid in a JSON schema
-/// }
-/// \param options JSON object representing additional options for the model
-///        - id_field -> Name of the id field, defaults to 'id'
-//////////////////////////////////////////////////////////////////////////////
-
-
 /**
  * Creates a new class for representing a Model which may be loaded from
  * and persisted to the database
@@ -85,10 +70,6 @@ function defineModel(table_name, model_fields, options){
 	 * fields of the created model instance. Any field's whose value is not
 	 * specified will be set to null. Attempting to set a field which does not
 	 * exist will result in an exception.
-	 *
-	 * @todo Throw error if attempt to specify id field -> we don't want arbitrary
-	 * ids or it will look as though it exists in the db, may override existing
-	 * rows, etc
 	 */
 	let Model = function(field_values){
 		// Define fields of the model
@@ -150,7 +131,7 @@ function defineModel(table_name, model_fields, options){
 
 	/**
 	 * @note This does not include the name of the id field
-	 * @see getIdFieldName
+	 * @see {@link Model.getIdFieldName}
 	 *
 	 * @return {string[]} Array of field names in this model
 	 */
@@ -185,7 +166,7 @@ function defineModel(table_name, model_fields, options){
 	 * @param field_values {object} - Object containing values for the fields
 	 * of the created instance
 	 *
-	 * return {Promise} - Promise which will either resolve to the created
+	 * @return {Promise} Promise which will either resolve to the created
 	 * instance after it has been saved (and thus assigned an id if the id
 	 * column is AUTO_INCREMENT) or be rejected if an error occurs while saving
 	 */
@@ -194,10 +175,6 @@ function defineModel(table_name, model_fields, options){
 		return result.save(dbh);
 	};
 
-	/////////////////////////////////////////////////////////////////////
-	/// \brief Creates an instance of this model from a row loaded from the
-	/// database are returned by db-connection-promise.query
-	/////////////////////////////////////////////////////////////////////
 	/**
 	 * Creates a new instance of Model from a row of data retrieved from the
 	 * database
@@ -207,6 +184,8 @@ function defineModel(table_name, model_fields, options){
 	 * use custom SQL queries to load a Model instance
 	 *
 	 * @param row {object} - Row of data returned from the database
+	 *
+	 * @return {Model} The created instance
 	 */
 	Model.createFromRow = function(row){
 		// :TODO:COMP: can we just use constructor?
@@ -239,6 +218,9 @@ function defineModel(table_name, model_fields, options){
 	 * database
 	 *
 	 * @param rows {Object[]} - Array of rows returned from the database
+	 *
+	 * @return {Model[]} Array of created instances. Will be in the same order as
+	 * the rows parameter
 	 */
 	Model.createFromRows = function(rows) {
 		if(rows.rowCount != null && rows.rows != null && rows.fields != null){
@@ -282,95 +264,108 @@ function defineModel(table_name, model_fields, options){
 	 */
 	Model.prototype.getModel = function() { return Model; };
 
-	_attachQueryFunctions(Model);
-	_attachJsonSchema    (Model, model_fields);
-
-	return Model;
-}
-
-module.exports = {
-	defineModel           : defineModel,
-};
-
-////////////////////////////////////////////////////////////////////////////////
-// Helper functions below
-////////////////////////////////////////////////////////////////////////////////
-
-function _attachQueryFunctions(ModelClass){
 	///////////////////////////////
 	// Load query
-	let stmt_load = "SELECT " + ModelClass.getIdFieldName() + ",";
-	for(let f of ModelClass.getFieldNames()){ stmt_load += f + ","; }
+	let stmt_load = "SELECT " + Model.getIdFieldName() + ",";
+	for(let f of Model.getFieldNames()){ stmt_load += f + ","; }
 	stmt_load = stmt_load.slice(0,-1);
-	stmt_load += " FROM " + ModelClass.getTableName() + " WHERE " + ModelClass.getIdFieldName() + "=?;";
+	stmt_load += " FROM " + Model.getTableName() + " WHERE " + Model.getIdFieldName() + "=?;";
 	//console.info("  Made load stmt: " + stmt_load);
-	ModelClass._queries.load = stmt_load;
+	Model._queries.load = stmt_load;
 
-	/////////////////////////////////////////////////////////////////////
-	/// \brief Loads a specific instance of this model from the data base
-	/// \param dbh A db-connection-promise to use to access the database
-	/// \param id  The id of the instance to load - should be unique
-	/////////////////////////////////////////////////////////////////////
-	ModelClass.load = function(dbh, id){
+	/**
+	 * Loads a specific instance of the Model from the database
+	 * @param dbh {DbConnectionPromise} - Database handle with which to load the
+	 * instance
+	 * @param id - The id of the instance to load - should be unique
+	 * @return {Promise} - Promise which will either resolve to the loaded Model
+	 * instance, or will be rejected if an error occurred during loading
+	 */
+	Model.load = function(dbh, id){
 		return dbh
-			.query(ModelClass._queries.load, [id])
+			.query(Model._queries.load, [id])
 			.then((res) => {
 				if(res.rows.length !== 1){
-					throw ("Failed to load " + id + " from " + ModelClass.getTableName()
+					throw ("Failed to load " + id + " from " + Model.getTableName()
 					       + " since result contained " + res.rows.length + " entries");
 				}
-				return ModelClass.createFromRow(res.rows[0]);
+				return Model.createFromRow(res.rows[0]);
 			});
 	};
 
 	///////////////////////////////
 	// Find query
-	var stmt_find = "SELECT " + ModelClass.getIdFieldName() + ",";
-	for(let f of ModelClass.getFieldNames()){ stmt_find += f + ","; }
+	var stmt_find = "SELECT " + Model.getIdFieldName() + ",";
+	for(let f of Model.getFieldNames()){ stmt_find += f + ","; }
 	stmt_find = stmt_find.slice(0,-1);
-	stmt_find += " FROM " + ModelClass.getTableName() + " WHERE ";
+	stmt_find += " FROM " + Model.getTableName() + " WHERE ";
 	//console.info("  Made find stmt: " + stmt_find);
-	ModelClass._queries.find_prefix = stmt_find;
+	Model._queries.find_prefix = stmt_find;
 
-	ModelClass.find = function(dbh, where_clause, params){
-		//:TODO: escape the where clause?
-		var query = ModelClass._queries.find_prefix + where_clause;
+	/**
+	 * Finds a set of Model instances in the database according to some
+	 * criteria
+	 *
+	 * @param dbh {DbConnectionPromise} - Database handle with which to search
+	 * the database and load the found instances
+	 * @param where_clause {string} - SQL snippet which will be used as the WHERE
+	 * clause when loading
+	 * @param params [array] - Array of values to use for the bound parameters
+	 * in the where clause
+	 */
+	Model.find = function(dbh, where_clause, params){
+		var query = Model._queries.find_prefix + where_clause;
 		return dbh
 			.query(query, params)
-			.then(ModelClass.createFromRows.bind(ModelClass));
+			.then(Model.createFromRows.bind(Model));
 	};
 
 	///////////////////////////////
 	// Update query
 	// :TODO: have option for an auto-update modified_at field
-	var stmt_update = "UPDATE " + ModelClass.getTableName() + " SET ";
-	for(let f of ModelClass.getFieldNames()){
+	var stmt_update = "UPDATE " + Model.getTableName() + " SET ";
+	for(let f of Model.getFieldNames()){
 		stmt_update += f + "=?,";
 	}
 	stmt_update = stmt_update.slice(0, -1);
-	stmt_update += " WHERE " + ModelClass.getIdFieldName() + "=?;";
+	stmt_update += " WHERE " + Model.getIdFieldName() + "=?;";
 	//console.info("  Made update stmt: " + stmt_update);
-	ModelClass._queries.update = stmt_update;
+	Model._queries.update = stmt_update;
 
 	///////////////////////////////
 	// Insert query
 	// :TODO: have option for an auto-update created_at field
-	var stmt_insert = "INSERT INTO " + ModelClass.getTableName() + "(";
-	for(let f of ModelClass.getFieldNames()){ stmt_insert += f + ","; }
+	var stmt_insert = "INSERT INTO " + Model.getTableName() + "(";
+	for(let f of Model.getFieldNames()){ stmt_insert += f + ","; }
 	stmt_insert = stmt_insert.slice(0,-1);
 	stmt_insert += ") VALUES (";
-			for(let f in ModelClass.getFieldNames()){ stmt_insert += "?,"; }
+			for(let f in Model.getFieldNames()){ stmt_insert += "?,"; }
 	stmt_insert = stmt_insert.slice(0,-1);
 	stmt_insert += ");";
 	//console.info("  Made insert stmt: " + stmt_insert);
-	ModelClass._queries.insert = stmt_insert;
+	Model._queries.insert = stmt_insert;
 
-	ModelClass.prototype.save = function(dbh){
+	/**
+	 * Saves the instance to the database. If the instance already exists (IE: id
+	 * is not 0) then will update the existing row. Otherwise will insert a new
+	 * row - after which the id field will be filled in (assuming the id field
+	 * in the database is AUTO_INCREMENT
+	 *
+	 * @param dbh {DbConnectionPromise} - Handle to the database
+	 *
+	 * @return {Promise} Promise which will either resolve to the instance after
+	 * is saved, or will be rejected if an error occurs while updating the
+	 * base. This method will only modify the id field (if the instance has not
+	 * yet been saved) and the isDirty state.
+	 * @todo :TODO: implement auto-updated modified_at etc fields -> this will
+	 * also modify that field
+	 */
+	Model.prototype.save = function(dbh){
 		// Do nothing if the instance is not _dirty
 		if(!this._dirty){ return Q(this); }
 
 		// Generate parameters for the save operation
-		let params = ModelClass
+		let params = Model
 		    .getFieldNames()
 		    .map((f) => {
 			    return this._fields[f];
@@ -382,7 +377,7 @@ function _attachQueryFunctions(ModelClass){
 		if(this.id === 0){
 			//then this instance has never been saved before, insert new record
 			promise = dbh
-				.query(ModelClass._queries.insert, params)
+				.query(Model._queries.insert, params)
 				.then((res) => {
 					this._fields.id = res.lastInsertId;
 					return this;
@@ -390,7 +385,7 @@ function _attachQueryFunctions(ModelClass){
 		} else {
 			//updaing existing entry requires a WHERE id = ? as well
 			params.push(this.id);
-			promise = dbh.query(ModelClass._queries.update, params);
+			promise = dbh.query(Model._queries.update, params);
 		}
 
 		promise = promise.then((res) => {
@@ -403,28 +398,50 @@ function _attachQueryFunctions(ModelClass){
 
 	///////////////////////////////
 	// Delete query
-	ModelClass._queries.delete = "DELETE FROM " + ModelClass.getTableName() +
-		" WHERE " + ModelClass.getIdFieldName() + "=?;";
+	Model._queries.delete = "DELETE FROM " + Model.getTableName() +
+		" WHERE " + Model.getIdFieldName() + "=?;";
 
-	//console.info("  Made delete statement: " + ModelClass._queries.delete);
+	//console.info("  Made delete statement: " + Model._queries.delete);
 
-	ModelClass.delete = function(dbh, id){
-		return dbh.query(ModelClass._queries.delete, [id]);
+	/**
+	 * Deletes an instance from the database by id
+	 *
+	 * @param dbh {DbConnectionPromise} - Handle to the database
+	 * @param id - The id of the instance to delete
+	 *
+	 * @note Due to the underlying database implementation there is no way to
+	 * test if this operation succeeded - IE: if there does not exist an instance
+	 * with the specified row this method will act as a no-op
+	 */
+	Model.delete = function(dbh, id){
+		return dbh.query(Model._queries.delete, [id]);
 	};
 
-	ModelClass.prototype.delete = function(dbh){
+	Model.prototype.delete = function(dbh){
 		// If not yet saved in database, do nothing
 		if(this.id === 0){ return Q(this); }
 
 		return dbh
-			.query(ModelClass._queries.delete, this.id)
+			.query(Model._queries.delete, this.id)
 			.then((instance) => {
 				this._fields.id = 0;
 				this._dirty     = true;
 				return this;
 			});
 	};
+
+	_attachJsonSchema    (Model, model_fields);
+
+	return Model;
 }
+
+module.exports = {
+	defineModel           : defineModel,
+};
+
+////////////////////////////////////////////////////////////////////////////////
+// Helper functions below
+////////////////////////////////////////////////////////////////////////////////
 
 function _convertToDetailedFieldDescriptors(model_fields){
 	return model_fields.map((field) => {
