@@ -171,9 +171,18 @@ function defineModel(table_name, model_fields, options){
 	 * Model's fields only, with no associated meta data (eg: the name of
 	 * table which stores Model
 	 *
+	 * The returned object can be turned back into a Model using the createFromRow
+	 * function.
+	 *
 	 * @return {object}
 	 */
-	Model.prototype.toJSON = function(){ return this._fields; };
+	Model.prototype.toJSON = function(){
+		let result = {};
+		for(let key of Object.keys(this._fields)){
+			result[key] = Model._mappers[key].toDb(this._fields[key]);
+		}
+		return result;
+	};
 
 	/**
 	 * Creates a new instance of the Model and persists it to the database
@@ -501,7 +510,9 @@ function _attachJsonSchema(Model, model_fields){
 };
 
 function _generateMappingFunctions(model_fields){
-	let result = {};
+	let result = {
+		id : _mapperNoop,
+	};
 	for(let field of model_fields){
 		if(field.type === 'datetime'){
 			result[field.name] = _mapperDate;

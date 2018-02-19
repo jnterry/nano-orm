@@ -157,4 +157,38 @@ describe("Datetime field", () => {
 				});
 		});
 	});
+
+	describe("toJSON", () => {
+		it("toJSON no map", () => {
+			let event = new EventNoMap({ datetime: '2000-05-10 12:34:45', what : 'thing'});
+
+			expect(event.datetime).deep.equals('2000-05-10 12:34:45');
+
+			let event_json = event.toJSON();
+			expect(typeof event_json.datetime).deep.equals('string');
+			expect(event_json.datetime       ).deep.equals('2000-05-10 12:34:45');
+
+			let event_reconstructed = EventNoMap.createFromRow(event_json);
+			expect(event_reconstructed.id      ).deep.equals(0);
+			expect(event_reconstructed.what    ).deep.equals('thing');
+			expect(event_reconstructed.datetime).deep.equals('2000-05-10 12:34:45');
+		});
+
+		it("toJSON with map", () => {
+			let event = new Event({ datetime: '2000-05-10 12:34:45', what : 'thing'});
+
+			expect(typeof event.datetime).not.deep.equals('string');
+
+			let event_json = event.toJSON();
+			expect(typeof event_json.datetime).deep.equals('string');
+			expect(event_json.datetime       ).deep.equals('2000-05-10 12:34:45.000000');
+
+			let event_reconstructed = Event.createFromRow(event_json);
+			expect(event_reconstructed.id             ).deep.equals(0);
+			expect(event_reconstructed.what           ).deep.equals('thing');
+			expect(event_reconstructed.datetime.year()).deep.equals(2000);
+		});
+	});
+
+
 });
