@@ -11,13 +11,14 @@
 "use strict";
 
 let Q = require('q');
+let moment = require('moment');
 
 /**
  * Creates a new class for representing a Model which may be loaded from
  * and persisted to the database
  *
- * @param {string} table_name - The name of the table in the database the created Model
- * should wrap
+ * @param {string} table_name - The name of the table in the database the
+ * created Model should wrap
  *
  * @param {Object[]} model_fields - Array of field descriptors. Order must be
  * that of the columns in the database. Each field descriptor may be either a
@@ -27,6 +28,14 @@ let Q = require('q');
  * name of the column in the database
  * @param {bool} [model_fields[].required] - Whether the field is required
  * (IE: cannot be NULL). Defaults to true.
+ * @param {string} [model_fields[].type] - Name of the datatype used to
+ * represent the field. May be one of:
+ * - string
+ * - number
+ * - boolean
+ * - datetime
+ *
+ * @param {string} [model_fields[].format] -
  *
  * @param {Object} [options] - JSON object representing the additional options for
  * the model.
@@ -121,6 +130,8 @@ function defineModel(table_name, model_fields, options){
 		}
 	};
 
+	_attachMappingFunctions(Model, model_fields);
+
 	Model._queries = {}; // cache of sql statements
 
 	/**
@@ -188,7 +199,6 @@ function defineModel(table_name, model_fields, options){
 	 * @return {Model} The created instance
 	 */
 	Model.createFromRow = function(row){
-		// :TODO:COMP: can we just use constructor?
 		let model = new Model();
 
 		// Check id is availible and set
@@ -204,7 +214,7 @@ function defineModel(table_name, model_fields, options){
 				throw new Error("Cannot construct instance of " + Model.getTableName() +
 				                " since row is missing data field: " + f);
 			}
-			model._fields[f] = row[f];
+			model._fields[f] = Model._mappers[f].fromDb(row[f]);
 		}
 
 		// Ensure model is not marked as dirty
@@ -482,4 +492,24 @@ function _attachJsonSchema(Model, model_fields){
 
 	Model.schema           = schema;
 	Model.prototype.schema = schema;
+};
+
+function _attachMappingFunctions(Model, model_fields){
+	Model._mappers = {};
+	for(let field of model_fields){
+		if(field.type === 'datetime'){
+			Model._mappers[field.name] = _mapperDate;
+		} else {
+			Model._mappers[field.name] = _mapperNoop;
+		}
+	}
+}
+
+let _mapperNoop = {
+	fromDb(x){ return x; },
+	toDb  (x){ return x; },
+};
+let _mapperDate = {
+	fromDb(date_str) { return moment(date_str); },
+	toDb  (date    ) { return date.format("YYYY-MM-DD HH:mm:ss.SSSSSS"); },
 };

@@ -26,4 +26,5 @@ describe('nano-orm', () => {
 	importTest('create-instance');
 	importTest('load-save-update-delete');
 	importTest('find');
+	importTest('datetime');
 });
