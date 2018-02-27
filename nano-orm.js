@@ -580,5 +580,11 @@ let _mapperNoop = {
 };
 let _mapperDate = {
 	fromDb(date_str) { return moment(date_str); },
-	toDb  (date    ) { return date.format("YYYY-MM-DD HH:mm:ss.SSSSSS"); },
+	toDb  (date    ) {
+		if(date != null){
+			return date.format("YYYY-MM-DD HH:mm:ss.SSSSSS");
+		} else {
+			return null;
+		}
+	},
 };
