@@ -236,8 +236,24 @@ describe('To JSON', () => {
 	});
 
 	it('Multiple fields', () => {
+		let User = nano_orm.defineModel('user', ['username', 'email']);
+
+		expect(ajv.validateSchema(User.schema)).to.deep.equal(true);
+
+		let user = new User();
+		let json = user.toJSON();
+		expect(json).to.deep.equal({ id: 0, username: null, email: null });
+		expect(ajv.validate(User.schema, json)).to.deep.equal(true);
+
+		user = new User({username : 'hi', email: 'hi@example.com'});
+		json = user.toJSON();
+		expect(json).to.deep.equal({ id: 0, username: 'hi', email: 'hi@example.com' });
+		expect(ajv.validate(User.schema, json)).to.deep.equal(true);
+	});
+
+	it('integer field', () => {
 		let User = nano_orm.defineModel('user', ['username',
-		                                         { name : 'age', type: 'integer' }
+		                                         { name: 'age', type: 'integer' }
 		                                        ]
 		                               );
 
@@ -245,12 +261,82 @@ describe('To JSON', () => {
 
 		let user = new User();
 		let json = user.toJSON();
-		expect(json).to.deep.equal({ id: 0, username: null, age: null });
+		expect(json).to.deep.equal({ id: 0, username: null, age: 0 });
 		expect(ajv.validate(User.schema, json)).to.deep.equal(true);
 
 		user = new User({username : 'hi', age: 32});
 		json = user.toJSON();
 		expect(json).to.deep.equal({ id: 0, username: 'hi', age: 32 });
+		expect(ajv.validate(User.schema, json)).to.deep.equal(true);
+	});
+
+	it('number field', () => {
+		let User = nano_orm.defineModel('user', ['username',
+		                                         { name: 'age', type: 'number' }
+		                                        ]
+		                               );
+
+		expect(ajv.validateSchema(User.schema)).to.deep.equal(true);
+
+		let user = new User();
+		let json = user.toJSON();
+		expect(json).to.deep.equal({ id: 0, username: null, age: 0 });
+		expect(ajv.validate(User.schema, json)).to.deep.equal(true);
+
+		user = new User({username : 'hi', age: 32.5 });
+		json = user.toJSON();
+		expect(json).to.deep.equal({ id: 0, username: 'hi', age: 32.5 });
+		expect(ajv.validate(User.schema, json)).to.deep.equal(true);
+	});
+
+	it('boolean field', () => {
+		let User = nano_orm.defineModel('user', ['username',
+		                                         { name: 'validated', type: 'boolean' }
+		                                        ]
+		                               );
+
+		expect(ajv.validateSchema(User.schema)).to.deep.equal(true);
+
+		let user = new User();
+		let json = user.toJSON();
+		expect(json).to.deep.equal({ id: 0, username: null, validated: false });
+		expect(ajv.validate(User.schema, json)).to.deep.equal(true);
+
+		user = new User({username : 'hi', validated: true });
+		json = user.toJSON();
+		expect(json).to.deep.equal({ id: 0, username: 'hi', validated: true});
+		expect(ajv.validate(User.schema, json)).to.deep.equal(true);
+	});
+
+	it('datetime field', () => {
+		let User = nano_orm.defineModel('user', [{ name: 'last_login', type: 'datetime' }]);
+
+		expect(ajv.validateSchema(User.schema)).to.deep.equal(true);
+
+		let user = new User({ last_login: '2018-02-19 22:55:46' });
+		let json = user.toJSON();
+		expect(json.id        ).to.deep.equal(0);
+		expect(json.last_login.substr(0, 19)).to.deep.equal('2018-02-19 22:55:46');
+		expect(ajv.validate(User.schema, json)).to.deep.equal(true);
+
+		user = new User();
+		json = user.toJSON();
+		expect(json).to.deep.equal({ id: 0, last_login: null });
+		// We say that last_login is required -> so this should fail
+		expect(ajv.validate(User.schema, json)).to.deep.equal(false);
+	});
+
+	it('Non-required datetime field', () => {
+		let User = nano_orm.defineModel('user', [{ name: 'last_login',
+		                                           type: 'datetime',
+		                                           required: false
+		                                         }]);
+
+
+		let user = new User();
+		let json = user.toJSON();
+		expect(json).to.deep.equal({ id: 0 });
+		// Now required is false, so this should be fine
 		expect(ajv.validate(User.schema, json)).to.deep.equal(true);
 	});
 });
