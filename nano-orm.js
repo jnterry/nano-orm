@@ -206,7 +206,10 @@ function defineModel(table_name, model_fields, options){
 	Model.prototype.toJSON = function(){
 		let result = {};
 		for(let key of Object.keys(this._fields)){
-			result[key] = Model._mappers[key].toDb(this._fields[key]);
+			let val = Model._mappers[key].toDb(this._fields[key]);
+			if(val != null || Model.schema.required.indexOf(key) >= 0){
+				result[key] = val;
+			}
 		}
 		return result;
 	};
