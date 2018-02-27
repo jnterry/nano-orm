@@ -13,6 +13,16 @@
 let Q = require('q');
 let moment = require('moment');
 
+// The allowed names for the datatype of a field, and what they map to in
+// a JSON schema
+let schema_type_mappings = {
+	string   : { type: 'string'  },
+	boolean  : { type: 'boolean' },
+	number   : { type: 'number'  },
+	integer  : { type: 'number'  },
+	datetime : { type: 'string'  },
+};
+
 /**
  * Creates a new class for representing a Model which may be loaded from
  * and persisted to the database
@@ -499,14 +509,30 @@ function _attachJsonSchema(Model, model_fields){
 	};
 
 	for(let field of model_fields){
-		schema.properties[field.name] = JSON.parse(JSON.stringify(field));
+		if(field.type == null){
+			schema.properties[field.name] = {};
+		} else {
+			let type = schema_type_mappings[field.type];
+			if(type == null){
+				throw new Error("Invalid field type: " + field.type + " for: " + field.name);
+			}
+			schema.properties[field.name] = JSON.parse(JSON.stringify(
+				schema_type_mappings[field.type]
+			));
+		}
 
 		if(field.required){
 			schema.required.push(field.name);
 		}
 
-		delete schema.properties[field.name].name;
-		delete schema.properties[field.name].required;
+		for(let property of Object.keys(field)){
+			if(property === 'name' ||
+			   property === 'required' ||
+			   property === 'type'){
+				continue;
+			}
+			schema.properties[field.name][property] = field[property];
+		}
 	}
 
 	Model.schema           = schema;

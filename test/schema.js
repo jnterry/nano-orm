@@ -155,3 +155,38 @@ describe('Valid model fields', () => {
 	});
 
 });
+
+describe('Data Types', () => {
+	// According to the JSON Schema spec the "type" field may be one of:
+	// null, boolean, object, array, number, string
+	// See: http://json-schema.org/latest/json-schema-core.html#rfc.section.4.2.1
+
+
+	it('string', () => {
+		let Test = nano_orm.defineModel('test', [{ name : 'thing', type: 'string'}]);
+		expect(Test.schema.properties           ).to.be.an        ('object');
+		expect(Test.schema.properties.thing     ).to.be.an        ('object');
+		expect(Test.schema.properties.thing.type).to.be.deep.equal('string');
+	});
+
+	it('number', () => {
+		let Test = nano_orm.defineModel('test', [{ name : 'thing', type: 'number'}]);
+		expect(Test.schema.properties           ).to.be.an        ('object');
+		expect(Test.schema.properties.thing     ).to.be.an        ('object');
+		expect(Test.schema.properties.thing.type).to.be.deep.equal('number');
+	});
+
+	it('integer', () => {
+		let Test = nano_orm.defineModel('test', [{ name : 'thing', type: 'integer'}]);
+		expect(Test.schema.properties           ).to.be.an        ('object');
+		expect(Test.schema.properties.thing     ).to.be.an        ('object');
+		expect(Test.schema.properties.thing.type).to.be.deep.equal('number');
+	});
+
+	it('datetime', () => {
+		let Test = nano_orm.defineModel('test', [{ name : 'thing', type: 'datetime'}]);
+		expect(Test.schema.properties           ).to.be.an        ('object');
+		expect(Test.schema.properties.thing     ).to.be.an        ('object');
+		expect(Test.schema.properties.thing.type).to.be.deep.equal('string');
+	});
+});
