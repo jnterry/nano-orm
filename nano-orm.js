@@ -23,6 +23,15 @@ let schema_type_mappings = {
 	datetime : { type: 'string'  },
 };
 
+// The default values for fields of different types
+let field_default_values = {
+	string   : null,
+	boolean  : false,
+	number   : 0,
+	integer  : 0,
+	datetime : null,
+};
+
 /**
  * Creates a new class for representing a Model which may be loaded from
  * and persisted to the database
@@ -103,7 +112,11 @@ function defineModel(table_name, model_fields, options){
 		// Ensure all fields have placeholder value
 		this._fields.id = 0; // 0 indicates not saved in db
 		for(let f of model_fields){
-			this._fields[f.name] = null;
+			let val = field_default_values[f.type];
+			if(val === undefined){
+				val = null;
+			}
+			this._fields[f.name] = val;
 		}
 
 		// Initialize values of the fields
