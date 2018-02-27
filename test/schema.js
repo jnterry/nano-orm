@@ -11,6 +11,8 @@
 
 require('./common');
 
+let ajv = new require('ajv')();
+
 describe('Bad model_fields', () => {
 	it('undefined', () => {
 		expect(() => {
@@ -91,6 +93,8 @@ describe('Valid model fields', () => {
 		expect(User.schema.required.length).to.deep.equal(2);
 		expect(User.schema.required       ).to.include('username');
 		expect(User.schema.required       ).to.include('password');
+
+		expect(ajv.validateSchema(User.schema)).to.deep.equal(true);
 	});
 
 	it('Field specifier objects - no required', () => {
@@ -112,6 +116,8 @@ describe('Valid model fields', () => {
 		expect(User.schema.required.length).to.deep.equal(2);
 		expect(User.schema.required  ).to.include('username');
 		expect(User.schema.required  ).to.include('password');
+
+		expect(ajv.validateSchema(User.schema)).to.deep.equal(true);
 	});
 
 	it('Field specifier objects - with required', () => {
@@ -132,6 +138,8 @@ describe('Valid model fields', () => {
 		expect(User.schema.required  ).to.be.an('array');
 		expect(User.schema.required.length).to.deep.equal(1);
 		expect(User.schema.required  ).to.include('username');
+
+		expect(ajv.validateSchema(User.schema)).to.deep.equal(true);
 	});
 
 	it('Mixed elements', () => {
@@ -152,6 +160,8 @@ describe('Valid model fields', () => {
 		expect(User.schema.required  ).to.be.an('array');
 		expect(User.schema.required.length).to.deep.equal(1);
 		expect(User.schema.required  ).to.include('username');
+
+		expect(ajv.validateSchema(User.schema)).to.deep.equal(true);
 	});
 
 });
@@ -167,6 +177,8 @@ describe('Data Types', () => {
 		expect(Test.schema.properties           ).to.be.an        ('object');
 		expect(Test.schema.properties.thing     ).to.be.an        ('object');
 		expect(Test.schema.properties.thing.type).to.be.deep.equal('string');
+
+		expect(ajv.validateSchema(Test.schema)).to.deep.equal(true);
 	});
 
 	it('number', () => {
@@ -174,6 +186,8 @@ describe('Data Types', () => {
 		expect(Test.schema.properties           ).to.be.an        ('object');
 		expect(Test.schema.properties.thing     ).to.be.an        ('object');
 		expect(Test.schema.properties.thing.type).to.be.deep.equal('number');
+
+		expect(ajv.validateSchema(Test.schema)).to.deep.equal(true);
 	});
 
 	it('integer', () => {
@@ -181,6 +195,8 @@ describe('Data Types', () => {
 		expect(Test.schema.properties           ).to.be.an        ('object');
 		expect(Test.schema.properties.thing     ).to.be.an        ('object');
 		expect(Test.schema.properties.thing.type).to.be.deep.equal('number');
+
+		expect(ajv.validateSchema(Test.schema)).to.deep.equal(true);
 	});
 
 	it('datetime', () => {
@@ -188,6 +204,8 @@ describe('Data Types', () => {
 		expect(Test.schema.properties           ).to.be.an        ('object');
 		expect(Test.schema.properties.thing     ).to.be.an        ('object');
 		expect(Test.schema.properties.thing.type).to.be.deep.equal('string');
+
+		expect(ajv.validateSchema(Test.schema)).to.deep.equal(true);
 	});
 
 	it('Invalid field type throws', () => {
