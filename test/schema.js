@@ -189,4 +189,10 @@ describe('Data Types', () => {
 		expect(Test.schema.properties.thing     ).to.be.an        ('object');
 		expect(Test.schema.properties.thing.type).to.be.deep.equal('string');
 	});
+
+	it('Invalid field type throws', () => {
+		expect(() => {
+			let Test = nano_orm.defineModel('test', [{name : 'thing', type: 'flabberdoodle'}]);
+		}).to.throw();
+	});
 });
