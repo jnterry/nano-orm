@@ -535,6 +535,8 @@ function _attachJsonSchema(Model, model_fields){
 		}
 	}
 
+	schema.type = 'object';
+
 	Model.schema           = schema;
 	Model.prototype.schema = schema;
 };
