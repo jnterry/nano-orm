@@ -193,7 +193,10 @@ function defineModel(table_name, model_fields, options){
 	Model.prototype.toJSON = function(){
 		let result = {};
 		for(let key of Object.keys(this._fields)){
-			result[key] = Model._mappers[key].toDb(this._fields[key]);
+			let val = Model._mappers[key].toDb(this._fields[key]);
+			if(val != null || Model.schema.required.indexOf(key) >= 0){
+				result[key] = val;
+			}
 		}
 		return result;
 	};
@@ -535,6 +538,11 @@ function _attachJsonSchema(Model, model_fields){
 		}
 	}
 
+	schema.properties.id = { type : 'integer' };
+	schema.required.push('id');
+
+	schema.type = 'object';
+
 	Model.schema           = schema;
 	Model.prototype.schema = schema;
 };
@@ -559,5 +567,11 @@ let _mapperNoop = {
 };
 let _mapperDate = {
 	fromDb(date_str) { return moment(date_str); },
-	toDb  (date    ) { return date.format("YYYY-MM-DD HH:mm:ss.SSSSSS"); },
+	toDb  (date    ) {
+		if(date != null){
+			return date.format("YYYY-MM-DD HH:mm:ss.SSSSSS");
+		} else {
+			return null;
+		}
+	},
 };
