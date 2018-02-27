@@ -261,8 +261,8 @@ describe('To JSON', () => {
 
 		let user = new User();
 		let json = user.toJSON();
-		expect(json).to.deep.equal({ id: 0, username: null, age: 0 });
-		expect(ajv.validate(User.schema, json)).to.deep.equal(true);
+		expect(json).to.deep.equal({ id: 0, username: null, age: null });
+		expect(ajv.validate(User.schema, json)).to.deep.equal(false); // age is required
 
 		user = new User({username : 'hi', age: 32});
 		json = user.toJSON();
@@ -280,8 +280,8 @@ describe('To JSON', () => {
 
 		let user = new User();
 		let json = user.toJSON();
-		expect(json).to.deep.equal({ id: 0, username: null, age: 0 });
-		expect(ajv.validate(User.schema, json)).to.deep.equal(true);
+		expect(json).to.deep.equal({ id: 0, username: null, age: null });
+		expect(ajv.validate(User.schema, json)).to.deep.equal(false);
 
 		user = new User({username : 'hi', age: 32.5 });
 		json = user.toJSON();
@@ -299,8 +299,8 @@ describe('To JSON', () => {
 
 		let user = new User();
 		let json = user.toJSON();
-		expect(json).to.deep.equal({ id: 0, username: null, validated: false });
-		expect(ajv.validate(User.schema, json)).to.deep.equal(true);
+		expect(json).to.deep.equal({ id: 0, username: null, validated: null });
+		expect(ajv.validate(User.schema, json)).to.deep.equal(false);
 
 		user = new User({username : 'hi', validated: true });
 		json = user.toJSON();
