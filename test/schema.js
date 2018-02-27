@@ -217,3 +217,40 @@ describe('Data Types', () => {
 		}).to.throw();
 	});
 });
+
+describe('To JSON', () => {
+	it('Single String', () => {
+		let User = nano_orm.defineModel('user', ['username']);
+
+		expect(ajv.validateSchema(User.schema)).to.deep.equal(true);
+
+		let user = new User();
+		let json = user.toJSON();
+		expect(json).to.deep.equal({ id: 0, username: null });
+		expect(ajv.validate(User.schema, json)).to.deep.equal(true);
+
+		user = new User({username : 'hi'});
+		json = user.toJSON();
+		expect(json).to.deep.equal({ id: 0, username: 'hi' });
+		expect(ajv.validate(User.schema, json)).to.deep.equal(true);
+	});
+
+	it('Multiple fields', () => {
+		let User = nano_orm.defineModel('user', ['username',
+		                                         { name : 'age', type: 'integer' }
+		                                        ]
+		                               );
+
+		expect(ajv.validateSchema(User.schema)).to.deep.equal(true);
+
+		let user = new User();
+		let json = user.toJSON();
+		expect(json).to.deep.equal({ id: 0, username: null, age: null });
+		expect(ajv.validate(User.schema, json)).to.deep.equal(true);
+
+		user = new User({username : 'hi', age: 32});
+		json = user.toJSON();
+		expect(json).to.deep.equal({ id: 0, username: 'hi', age: 32 });
+		expect(ajv.validate(User.schema, json)).to.deep.equal(true);
+	});
+});
