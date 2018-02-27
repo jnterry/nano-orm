@@ -90,7 +90,8 @@ describe('Valid model fields', () => {
 		expect(User.schema.properties.password).to.deep.equal({});
 
 		expect(User.schema.required       ).to.be.an('array');
-		expect(User.schema.required.length).to.deep.equal(2);
+		expect(User.schema.required.length).to.deep.equal(3);
+		expect(User.schema.required       ).to.include('id'      );
 		expect(User.schema.required       ).to.include('username');
 		expect(User.schema.required       ).to.include('password');
 
@@ -113,7 +114,8 @@ describe('Valid model fields', () => {
 		expect(User.schema.properties.password).to.deep.equal({});
 
 		expect(User.schema.required  ).to.be.an('array');
-		expect(User.schema.required.length).to.deep.equal(2);
+		expect(User.schema.required.length).to.deep.equal(3);
+		expect(User.schema.required  ).to.include('id'      );
 		expect(User.schema.required  ).to.include('username');
 		expect(User.schema.required  ).to.include('password');
 
@@ -136,7 +138,8 @@ describe('Valid model fields', () => {
 		expect(User.schema.properties.password).to.deep.equal({});
 
 		expect(User.schema.required  ).to.be.an('array');
-		expect(User.schema.required.length).to.deep.equal(1);
+		expect(User.schema.required.length).to.deep.equal(2);
+		expect(User.schema.required  ).to.include('id'      );
 		expect(User.schema.required  ).to.include('username');
 
 		expect(ajv.validateSchema(User.schema)).to.deep.equal(true);
@@ -158,7 +161,8 @@ describe('Valid model fields', () => {
 		expect(User.schema.properties.password).to.deep.equal({ minLength : 6});
 
 		expect(User.schema.required  ).to.be.an('array');
-		expect(User.schema.required.length).to.deep.equal(1);
+		expect(User.schema.required.length).to.deep.equal(2);
+		expect(User.schema.required  ).to.include('id'      );
 		expect(User.schema.required  ).to.include('username');
 
 		expect(ajv.validateSchema(User.schema)).to.deep.equal(true);
@@ -170,7 +174,6 @@ describe('Data Types', () => {
 	// According to the JSON Schema spec the "type" field may be one of:
 	// null, boolean, object, array, number, string
 	// See: http://json-schema.org/latest/json-schema-core.html#rfc.section.4.2.1
-
 
 	it('string', () => {
 		let Test = nano_orm.defineModel('test', [{ name : 'thing', type: 'string'}]);

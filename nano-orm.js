@@ -535,6 +535,9 @@ function _attachJsonSchema(Model, model_fields){
 		}
 	}
 
+	schema.properties.id = { type : 'integer' };
+	schema.required.push('id');
+
 	schema.type = 'object';
 
 	Model.schema           = schema;
