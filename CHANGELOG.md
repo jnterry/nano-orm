@@ -1,3 +1,8 @@
+* Tue Feb 27 2018 Jamie Terry <jamie-terry@outlook.com> 0.7.2
+  - Add id field to JSON schema, and to toJSON output
+  - Ensure fields that are not required and that are null are not include in the toJSON
+  - Add unit tests to ensure the toJSON output meets the generated schema
+  - Other misc JSON schema fixes
 * Tue Feb 27 2018 Jamie Terry <jamie-terry@outlook.com> 0.7.1
   - Ensure that type field of generated JSON schema is always a valid value according to the JSON Schema spec
 * Mon Feb 19 2018 Jamie Terry <jamie-terry@outlook.com> 0.7.0
