@@ -1,3 +1,5 @@
+* Tue Feb 27 2018 Jamie Terry <jamie-terry@outlook.com> 0.7.1
+  - Ensure that type field of generated JSON schema is always a valid value according to the JSON Schema spec
 * Mon Feb 19 2018 Jamie Terry <jamie-terry@outlook.com> 0.7.0
   - Add support for "datetime" fields - automatically parse database string into moment instance
   - Add jsdoc style documentation
