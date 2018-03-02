@@ -10,8 +10,9 @@ _Tiny wrapper layer for loading and persisting Models from SQL databases using a
 The package number will be bumped to 1.0.0 for the initial release, todo before then:
 - Release [any-db-q](https://github.com/jnterry/any-db-q)
 - Test usage of this in a real project
-- Explore concept of extensions (mini-modules that add methods to the prototypes of models to offer enhanced functionality)
 - Auto-updated created_at and modified_at fields
+- Explore concept of extensions (mini-modules that add methods to the prototypes of models to offer enhanced functionality)
+- ORM's can play a role in other areas - eg, parsing/generating JSON for API responses. Can we make this general enough to support that use case as well? -> if we do extensions as with above then database functionality is an extension
 
 ## Motivation and Who is This For?
 
