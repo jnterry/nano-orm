@@ -1,6 +1,6 @@
 {
 	"name": "nano-orm",
-	"version": "0.7.2",
+	"version": "0.7.3",
 	"description": "Tiny wrapper layer for loading and persisting models to databases with promise based interface",
 	"homepage": "https://github.com/jnterry/nano-orm",
 	"author": "Jamie Terry (https://github.com/jnterry)",
