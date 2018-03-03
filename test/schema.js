@@ -268,6 +268,11 @@ describe('To JSON', () => {
 		json = user.toJSON();
 		expect(json).to.deep.equal({ id: 0, username: 'hi', age: 32 });
 		expect(ajv.validate(User.schema, json)).to.deep.equal(true);
+
+		user = new User({username : 'hi', age: '32'});
+		json = user.toJSON();
+		expect(json).to.deep.equal({ id: 0, username: 'hi', age: 32 });
+		expect(ajv.validate(User.schema, json)).to.deep.equal(true);
 	});
 
 	it('number field', () => {
@@ -284,6 +289,11 @@ describe('To JSON', () => {
 		expect(ajv.validate(User.schema, json)).to.deep.equal(false);
 
 		user = new User({username : 'hi', age: 32.5 });
+		json = user.toJSON();
+		expect(json).to.deep.equal({ id: 0, username: 'hi', age: 32.5 });
+		expect(ajv.validate(User.schema, json)).to.deep.equal(true);
+
+		user = new User({username : 'hi', age: '32.5' });
 		json = user.toJSON();
 		expect(json).to.deep.equal({ id: 0, username: 'hi', age: 32.5 });
 		expect(ajv.validate(User.schema, json)).to.deep.equal(true);
