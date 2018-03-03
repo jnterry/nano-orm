@@ -576,8 +576,8 @@ let field_mappers = {
 		toDb  (int_val) { return int_val; },
 	},
 	number : {
-		fromDb(str_val) { return str_val + 0; },
-		toDb  (num_val) { return num_val; },
+		fromDb(str_val) { return Number(str_val); },
+		toDb  (num_val) { return num_val;         },
 	}
 };
 
