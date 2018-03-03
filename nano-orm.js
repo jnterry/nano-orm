@@ -549,29 +549,39 @@ function _attachJsonSchema(Model, model_fields){
 
 function _generateMappingFunctions(model_fields){
 	let result = {
-		id : _mapperNoop,
+		id : field_mapper_noop,
 	};
 	for(let field of model_fields){
-		if(field.type === 'datetime'){
-			result[field.name] = _mapperDate;
-		} else {
-			result[field.name] = _mapperNoop;
+		result[field.name] = field_mappers[field.type];
+		if(result[field.name] == null){
+			result[field.name] = field_mapper_noop;
 		}
 	}
 	return result;
 }
 
-let _mapperNoop = {
+let field_mappers = {
+	datetime : {
+		fromDb(date_str) { return moment(date_str); },
+		toDb  (date    ) {
+			if(date != null){
+				return date.format("YYYY-MM-DD HH:mm:ss.SSSSSS");
+			} else {
+				return null;
+			}
+		},
+	},
+	integer : {
+		fromDb(str_val) { return parseInt(str_val); },
+		toDb  (int_val) { return int_val; },
+	},
+	number : {
+		fromDb(str_val) { return Number(str_val); },
+		toDb  (num_val) { return num_val;         },
+	}
+};
+
+let field_mapper_noop = {
 	fromDb(x){ return x; },
 	toDb  (x){ return x; },
-};
-let _mapperDate = {
-	fromDb(date_str) { return moment(date_str); },
-	toDb  (date    ) {
-		if(date != null){
-			return date.format("YYYY-MM-DD HH:mm:ss.SSSSSS");
-		} else {
-			return null;
-		}
-	},
 };

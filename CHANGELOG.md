@@ -1,3 +1,5 @@
+* Sat Mar 03 2018 Jamie Terry <jamie-terry@outlook.com> 0.7.3
+  - Ensure numbers and integers are output in JSON as numbers and integers, rather than strings containing numbrs
 * Tue Feb 27 2018 Jamie Terry <jamie-terry@outlook.com> 0.7.2
   - Add id field to JSON schema, and to toJSON output
   - Ensure fields that are not required and that are null are not include in the toJSON
