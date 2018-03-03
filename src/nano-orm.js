@@ -1,12 +1,14 @@
-////////////////////////////////////////////////////////////////////////////
-///                           Part of nano-orm                           ///
-////////////////////////////////////////////////////////////////////////////
-/// \file nano-orm.js
-/// \author Jamie Terry
-/// \date 2017/07/27
-/// \brief Defines base class for representing Model's which can be both
-/// loaded from and persisted to some database
-////////////////////////////////////////////////////////////////////////////
+/**************************************************************************
+ ***                          Part of nano-orm                          ***
+ **************************************************************************
+ *
+ * @overview Main file for nano-orm. Includes all other modules and exports
+ * the public interface to the library
+ *
+ **************************************************************************
+ */
+
+"use strict";
 
 "use strict";
 

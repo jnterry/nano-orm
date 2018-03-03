@@ -10,7 +10,7 @@
 global.expect = require('chai').expect;
 global.Q      = require('q');
 
-global.nano_orm = require('../nano-orm');
+global.nano_orm = require('../src/nano-orm');
 
 let AnyDb               = require('any-db');
 let DbConnectionPromise = require('db-connection-promise');

@@ -15,7 +15,7 @@
 		"type": "git",
 		"url": "git://github.com/jnterry/nano-orm.git"
 	},
-	"main": "nano-orm.js",
+	"main": "src/nano-orm.js",
 	"license": "MIT",
 	"scripts": {
 		"test": "./node_modules/.bin/mocha test/all.js --reporter spec",
