@@ -562,7 +562,13 @@ function _generateMappingFunctions(model_fields){
 
 let field_mappers = {
 	datetime : {
-		fromDb(date_str) { return moment(date_str); },
+		fromDb(date_str) {
+			if(date_str == null){
+				return null;
+			} else {
+				return moment(date_str);
+			}
+		},
 		toDb  (date    ) {
 			if(date != null){
 				return date.format("YYYY-MM-DD HH:mm:ss.SSSSSS");
