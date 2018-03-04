@@ -1,3 +1,5 @@
+* Sun Mar 04 2018 Jamie Terry <jamie-terry@outlook.com> 0.7.4
+  - Fix bug where loading a null datetime from database resulted in an invalid moment instance, rather than null
 * Sat Mar 03 2018 Jamie Terry <jamie-terry@outlook.com> 0.7.3
   - Ensure numbers and integers are output in JSON as numbers and integers, rather than strings containing numbrs
 * Tue Feb 27 2018 Jamie Terry <jamie-terry@outlook.com> 0.7.2
